@@ -1,101 +1,216 @@
-import Image from "next/image";
+'use client';
+
+import { KeyboardEvent, useEffect, useState } from 'react';
+import { ListingData } from '@/types';
+import { clsx } from 'clsx';
+import { getLevenshteinDistance } from './_util/getLevenshteinDistance';
+
+function getSearchSuggestions(
+    previousSearches: string[],
+    searchTerm: string,
+    maxSuggestions: number = 5
+): string[] {
+    if (!searchTerm) return [];
+
+    return previousSearches
+        .map((term) => ({
+            term,
+            distance: getLevenshteinDistance(
+                term.toLowerCase(),
+                searchTerm.toLowerCase()
+            ),
+        }))
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, maxSuggestions)
+        .map((result) => result.term);
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchResults, setSearchResults] = useState<ListingData[]>([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [hasSearched, setHasSearched] = useState(false);
+    const [previousSearches, setPreviousSearches] = useState<string[]>([]);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    useEffect(() => {
+        const storedSearches = localStorage.getItem('previousSearches');
+        if (storedSearches) {
+            setPreviousSearches(JSON.parse(storedSearches));
+        }
+    }, []);
+
+    const handleSearch = async () => {
+        if (!searchTerm) return;
+        if (!hasSearched) setHasSearched(true);
+        setSearchLoading(true);
+
+        const response = await fetch('/api/marketplace', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ searchTerm }),
+        });
+        const data = await response.json();
+        setSearchResults(data['listings']);
+
+        const updatedSearches = [
+            searchTerm,
+            ...previousSearches.filter((term) => term !== searchTerm),
+        ].slice(0, 10);
+        setPreviousSearches(updatedSearches);
+        setSearchLoading(false);
+
+        localStorage.setItem('previousSearches', JSON.stringify(updatedSearches));
+    };
+
+    const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            if (highlightedIndex >= 0 && highlightedIndex < searchSuggestions.length) {
+                handleDropdownSelect(searchSuggestions[highlightedIndex]);
+            } else {
+                void handleSearch();
+            }
+            setShowDropdown(false);
+        } else if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            setHighlightedIndex((prevIndex) =>
+                Math.min(prevIndex + 1, searchSuggestions.length - 1)
+            );
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            setHighlightedIndex((prevIndex) => Math.max(prevIndex - 1, 0));
+        } else if (event.key === 'Tab' && showDropdown) {
+            event.preventDefault();
+            setHighlightedIndex(
+                (prevIndex) => (prevIndex + 1) % searchSuggestions.length
+            );
+        }
+    };
+
+    const handleDropdownSelect = (term: string) => {
+        setSearchTerm(term);
+        setShowDropdown(false);
+        setHighlightedIndex(-1);
+    };
+
+    const searchSuggestions = getSearchSuggestions(previousSearches, searchTerm, 5);
+
+    return (
+        <div className="flex min-h-screen flex-col items-center bg-gray-100 px-4 py-8">
+            <h1 className="mb-6 text-4xl font-bold text-gray-800">Yard Sale</h1>
+            <p className="mb-4 text-lg text-gray-600">
+                Find the best deals on used items across different platforms.
+            </p>
+            <div className="mb-6 w-full max-w-xl">
+                <div className="relative mb-4 h-14 w-full">
+                    <div
+                        className="absolute left-0 top-0 w-full overflow-clip rounded-lg
+                            focus-within:ring-2 focus-within:ring-indigo-500"
+                    >
+                        <input
+                            type="text"
+                            placeholder="Search for used items..."
+                            value={searchTerm}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setShowDropdown(true);
+                                setHighlightedIndex(-1);
+                            }}
+                            onKeyDown={handleKeyDown}
+                            onBlur={() => setShowDropdown(false)}
+                            className={clsx(
+                                `w-full rounded-lg border border-gray-300 p-4 shadow-sm
+                                focus:outline-none`,
+                                showDropdown &&
+                                    searchSuggestions.length > 0 &&
+                                    'rounded-b-none border-0 border-b'
+                            )}
+                        />
+                        {showDropdown && searchSuggestions.length > 0 && (
+                            <div className="max-h-48 rounded-lg rounded-t-none bg-white">
+                                {searchSuggestions.map((term, index) => (
+                                    <div
+                                        key={index}
+                                        onClick={() => handleDropdownSelect(term)}
+                                        onMouseDown={() => handleDropdownSelect(term)}
+                                        className={clsx(
+                                            `pointer-events-auto relative cursor-pointer
+                                            px-4 py-3 hover:bg-gray-100`,
+                                            index === highlightedIndex && 'bg-gray-200',
+                                            index === searchSuggestions.length - 1 &&
+                                                'rounded-b-lg'
+                                        )}
+                                        role="button"
+                                    >
+                                        {term}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+                <button
+                    onClick={handleSearch}
+                    className="w-full rounded-lg bg-indigo-600 py-3 font-semibold
+                        text-white transition hover:bg-indigo-700"
+                >
+                    Search
+                </button>
+            </div>
+            <div className="w-full max-w-4xl">
+                {hasSearched &&
+                    (searchLoading ? (
+                        <div>
+                            <div className="flex items-center justify-center">
+                                <div
+                                    className="h-8 w-8 animate-spin rounded-full border-4
+                                        border-indigo-600 border-t-transparent"
+                                ></div>
+                            </div>
+                        </div>
+                    ) : searchResults.length > 0 ? (
+                        <div
+                            className="grid grid-cols-1 gap-6 md:grid-cols-2
+                                lg:grid-cols-3"
+                        >
+                            {searchResults.map((listing) => (
+                                <div
+                                    key={listing.title}
+                                    className="flex flex-col rounded-lg bg-white p-4
+                                        shadow-md"
+                                >
+                                    <img
+                                        src={listing.thumbnailSrc}
+                                        alt={listing.title}
+                                        className="mb-4 h-48 w-full rounded-md
+                                            object-cover"
+                                    />
+                                    <div className="flex flex-grow flex-col">
+                                        <h2
+                                            className="mb-1 text-lg font-semibold
+                                                text-gray-800"
+                                        >
+                                            {listing.title}
+                                        </h2>
+                                        <p className="mb-2 text-sm text-gray-600">
+                                            {listing.location}
+                                        </p>
+                                        <p className="text-xl font-bold text-indigo-600">
+                                            ${listing.price}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-gray-600">
+                            No listings found. Try searching for something else.
+                        </p>
+                    ))}
+            </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    );
 }
