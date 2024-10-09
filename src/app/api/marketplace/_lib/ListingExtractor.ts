@@ -77,7 +77,15 @@ export class ListingExtractor {
             console.warn('Error getting thumbnail image source:', error);
         }
 
-        return { price, title, location, thumbnailSrc };
+        // Get the listing URL
+        let url = '';
+        try {
+            url = await listingElement.getAttribute('href');
+        } catch (error) {
+            console.warn('Error getting listing URL:', error);
+        }
+
+        return { price, title, location, thumbnailSrc, url };
     }
 
     private isPrice(text: string): boolean {

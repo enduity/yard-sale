@@ -1,18 +1,78 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { FacebookMarketplaceScraper } from './_lib/FacebookMarketplaceScraper';
-import { ListingData } from '@/types';
+import { ListingData, Listing, ListingSource } from '@/types';
+import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
-// Mock function to add listings to a cache
-function mockAddToCache(listingData: ListingData) {
-    console.log('Adding to cache:', listingData);
+async function addSearchToDb(searchTerm: string) {
+    const existingSearch = await prisma.search.findFirst({
+        where: { query: searchTerm },
+    });
+
+    if (!existingSearch) {
+        return prisma.search.create({ data: { query: searchTerm } });
+    }
+    return existingSearch;
 }
 
-// Mock function to retrieve listings from a cache
-function mockRetrieveFromCache(searchTerm: string): ListingData[] {
-    // Simulate retrieving cached listings for the search term
-    console.log('Retrieving from cache for:', searchTerm);
-    // For this example, return an empty array
-    return [];
+async function bufferFromUrl(url: string) {
+    const image = await (await fetch(url)).arrayBuffer();
+    return Buffer.from(image);
+}
+
+async function addToCache(listingData: ListingData, searchTerm: string) {
+    const imageBuffer = await bufferFromUrl(listingData.thumbnailSrc);
+
+    // First, add the search term (if it doesn't exist)
+    const search = await addSearchToDb(searchTerm);
+    // Second, add the thumbnail
+    const thumbnail = await prisma.thumbnail.create({
+        data: { image: imageBuffer },
+    });
+    // Check if the listing already exists
+    const existingListing = await prisma.listing.findFirst({
+        where: { url: listingData.url },
+    });
+    if (existingListing) {
+        return existingListing;
+    }
+    // Finally, add the listing
+    return prisma.listing.create({
+        data: {
+            price: listingData.price,
+            title: listingData.title,
+            location: listingData.location,
+            url: listingData.url,
+            searchId: search.id,
+            thumbnailId: thumbnail.id,
+            source: ListingSource.Marketplace,
+        },
+    });
+}
+
+async function getFromCache(searchTerm: string): Promise<Listing[]> {
+    const search = await prisma.search.findFirst({
+        where: { query: searchTerm },
+        include: { results: { include: { thumbnail: true } } },
+    });
+
+    if (search && Date.now() - search.time.getTime() > 3600000) {
+        await prisma.search.delete({ where: { id: search.id } });
+        return [];
+    }
+
+    if (!search) {
+        return [];
+    }
+
+    return search.results.map((result) => ({
+        price: result.price,
+        title: result.title,
+        location: result.location,
+        thumbnailId: result.thumbnail?.id,
+        url: result.url,
+        source: result.source as ListingSource,
+    }));
 }
 
 export async function GET(req: NextRequest) {
@@ -35,7 +95,7 @@ export async function GET(req: NextRequest) {
         await scraper.init();
 
         // Retrieve from cache first
-        const cachedListings = mockRetrieveFromCache(searchTerm);
+        const cachedListings = await getFromCache(searchTerm);
 
         // If we have enough cached data, paginate it and return
         if (cachedListings.length && cachedListings.length >= (page - 1) * pageSize) {
@@ -53,15 +113,22 @@ export async function GET(req: NextRequest) {
 
         // Fall back to scraping if cache is insufficient
         const listingGenerator = scraper.scrape(searchTerm);
-        const listings: ListingData[] = [...cachedListings];
+        const listings: Listing[] = [...cachedListings];
         let generatorError: unknown = null;
         let generatorDone = false;
 
         void (async () => {
             try {
                 for await (const listingData of listingGenerator) {
-                    listings.push(listingData);
-                    mockAddToCache(listingData);
+                    const cacheEntry = await addToCache(listingData, searchTerm);
+                    listings.push({
+                        price: new Prisma.Decimal(listingData.price),
+                        title: listingData.title,
+                        location: listingData.location,
+                        thumbnailId: cacheEntry.thumbnailId ?? undefined,
+                        url: listingData.url,
+                        source: ListingSource.Marketplace,
+                    });
                 }
             } catch (error) {
                 generatorError = error;
