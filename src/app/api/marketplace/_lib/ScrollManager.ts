@@ -1,4 +1,5 @@
 import { WebDriver, WebElement } from 'selenium-webdriver';
+import { ListingData } from '@/types';
 
 export class ScrollManager {
     private driver: WebDriver;
@@ -7,12 +8,12 @@ export class ScrollManager {
         this.driver = driver;
     }
 
-    public async scrollAndCollectListings(
-        processListings: (listings: WebElement[]) => Promise<void>,
+    public async *scrollAndCollectListings(
+        processListings: (listings: WebElement[]) => AsyncGenerator<ListingData>,
         getListingElements: () => Promise<WebElement[]>,
         checkSeeMorePopup: () => Promise<boolean>,
         waitForNewContent: (listings: WebElement[]) => Promise<boolean>
-    ): Promise<void> {
+    ): AsyncGenerator<ListingData> {
         const mainScrollableContainer = await this.findMainScrollableContainer();
         let previousScrollPosition: number = 0;
         if (mainScrollableContainer) {
@@ -29,7 +30,9 @@ export class ScrollManager {
                 break;
             }
 
-            await processListings(listings);
+            for await (const listing of processListings(listings)) {
+                yield listing;
+            }
 
             if (!mainScrollableContainer) {
                 break;
