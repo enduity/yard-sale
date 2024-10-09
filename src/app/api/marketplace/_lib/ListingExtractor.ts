@@ -52,22 +52,32 @@ export class ListingExtractor {
 
         const price: number = Math.round(parseFloat(priceStr.replace(/[^0-9.]/g, '')));
 
-        // Get location
-        let location = await elements[1].getText();
+        // Get location and title
+        let location = '';
+        let title = '';
 
-        if (this.isPrice(location)) {
-            if (elements.length <= 2) {
+        const secondElement = await elements[1].getText();
+        const elementCount = elements.length;
+
+        // If the second element is a price, it is the struck out original price
+        if (this.isPrice(secondElement)) {
+            if (elementCount >= 4) {
+                location = await elements[3].getText();
+                title = await elements[2].getText();
+            } else if (elementCount >= 3) {
+                // No title in this case
+                location = await elements[2].getText();
+            } else {
+                // Should not be possible
                 return null;
             }
-            location = await elements[2].getText();
-        }
-
-        // Get title
-        let title = '';
-        if (elements.length > 3) {
-            title = await elements[3].getText();
-        } else if (elements.length > 2) {
-            title = await elements[2].getText();
+        } else {
+            if (elementCount >= 3) {
+                location = await elements[2].getText();
+                title = secondElement;
+            } else if (elementCount >= 2) {
+                location = secondElement;
+            }
         }
 
         // Get thumbnail image source
@@ -83,7 +93,7 @@ export class ListingExtractor {
     }
 
     private isPrice(text: string): boolean {
-        return /^\d*([$€£])?\d*$/.test(text);
+        return /^[\d,]*([$€£])?[\d,]*$/.test(text);
     }
 
     public hashListing(listing: ListingData): string {
