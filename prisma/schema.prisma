@@ -16,7 +16,7 @@ model Listing {
   location    String
   thumbnail   Thumbnail? @relation(fields: [thumbnailId], references: [id])
   thumbnailId Int?
-  Search      Search    @relation(fields: [searchId], references: [id])
+  Search      Search    @relation("SearchListings", fields: [searchId], references: [id])
   searchId    Int
 }
 
@@ -29,6 +29,6 @@ model Thumbnail {
 model Search {
   id      Int       @id @default(autoincrement())
   query   String
-  results Listing[]
-  time    DateTime
+  results Listing[] @relation("SearchListings")
+  time    DateTime  @default(now())
 }

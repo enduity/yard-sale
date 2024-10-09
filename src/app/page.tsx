@@ -1,7 +1,7 @@
 'use client';
 
 import { KeyboardEvent, useEffect, useState } from 'react';
-import { ListingData } from '@/types';
+import { Listing } from '@/types';
 import { clsx } from 'clsx';
 import { getLevenshteinDistance } from './_util/getLevenshteinDistance';
 
@@ -27,7 +27,7 @@ function getSearchSuggestions(
 
 export default function Home() {
     const [searchTerm, setSearchTerm] = useState('');
-    const [searchResults, setSearchResults] = useState<ListingData[]>([]);
+    const [searchResults, setSearchResults] = useState<Listing[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
     const [previousSearches, setPreviousSearches] = useState<string[]>([]);
@@ -178,14 +178,14 @@ export default function Home() {
                             className="grid grid-cols-1 gap-6 md:grid-cols-2
                                 lg:grid-cols-3"
                         >
-                            {searchResults.map((listing) => (
+                            {searchResults.map((listing, index) => (
                                 <div
-                                    key={listing.title}
+                                    key={index}
                                     className="flex flex-col rounded-lg bg-white p-4
                                         shadow-md"
                                 >
                                     <img
-                                        src={listing.thumbnailSrc}
+                                        src={`/api/thumbnail?id=${listing.thumbnailId}`}
                                         alt={listing.title}
                                         className="mb-4 h-48 w-full rounded-md
                                             object-cover"
@@ -201,7 +201,7 @@ export default function Home() {
                                             {listing.location}
                                         </p>
                                         <p className="text-xl font-bold text-indigo-600">
-                                            ${listing.price}
+                                            ${listing.price.toString()}
                                         </p>
                                     </div>
                                 </div>
