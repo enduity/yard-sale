@@ -4,40 +4,64 @@ import { ListingData } from '@/types';
 
 // Mock function to add listings to a cache
 function mockAddToCache(listingData: ListingData) {
-    // Simulate adding listingData to a cache
     console.log('Adding to cache:', listingData);
 }
 
-export async function POST(req: NextRequest) {
+// Mock function to retrieve listings from a cache
+function mockRetrieveFromCache(searchTerm: string): ListingData[] {
+    // Simulate retrieving cached listings for the search term
+    console.log('Retrieving from cache for:', searchTerm);
+    // For this example, return an empty array
+    return [];
+}
+
+export async function GET(req: NextRequest) {
     const accessErrorResponse = NextResponse.json(
         { error: 'Unable to access Facebook Marketplace. Try again later.' },
         { status: 500 }
     );
 
-    const { searchTerm } = await req.json();
+    const url = new URL(req.url);
+    const searchTerm = url.searchParams.get('searchTerm');
+    const page = parseInt(url.searchParams.get('page') || '1', 10);
+    const pageSize = parseInt(url.searchParams.get('pageSize') || '8', 10);
+
+    if (!searchTerm) {
+        return NextResponse.json({ error: 'searchTerm is required' }, { status: 400 });
+    }
 
     const scraper = new FacebookMarketplaceScraper();
     try {
         await scraper.init();
 
-        const listingGenerator = scraper.scrape(searchTerm);
+        // Retrieve from cache first
+        const cachedListings = mockRetrieveFromCache(searchTerm);
 
-        const firstListings: ListingData[] = [];
-        let count = 0;
+        // If we have enough cached data, paginate it and return
+        if (cachedListings.length && cachedListings.length >= (page - 1) * pageSize) {
+            const paginatedListings = cachedListings.slice(
+                (page - 1) * pageSize,
+                page * pageSize
+            );
+            const hasMore = cachedListings.length > page * pageSize;
+            return NextResponse.json({
+                message: 'Cached search results',
+                listings: paginatedListings,
+                hasMore,
+            });
+        }
+
+        // Fall back to scraping if cache is insufficient
+        const listingGenerator = scraper.scrape(searchTerm);
+        const listings: ListingData[] = [...cachedListings];
         let generatorError: unknown = null;
         let generatorDone = false;
 
-        // Start processing the generator in the background
-        const processingPromise = (async () => {
+        void (async () => {
             try {
                 for await (const listingData of listingGenerator) {
-                    if (count < 8) {
-                        firstListings.push(listingData);
-                        count++;
-                    } else {
-                        // Process remaining listings
-                        mockAddToCache(listingData);
-                    }
+                    listings.push(listingData);
+                    mockAddToCache(listingData);
                 }
             } catch (error) {
                 generatorError = error;
@@ -47,29 +71,29 @@ export async function POST(req: NextRequest) {
             }
         })();
 
-        // Wait until we have at least 8 listings or an error occurs
-        while (firstListings.length < 8 && !generatorError && !generatorDone) {
+        // Wait until we have enough data or an error occurs
+        while (listings.length < page * pageSize && !generatorError && !generatorDone) {
             await new Promise((res) => setTimeout(res, 100));
         }
 
         if (generatorError) {
-            throw generatorError;
+            console.error('Error during scraping:', generatorError);
+            await scraper.close();
+            return accessErrorResponse;
         }
 
-        // Send the response with the first 8 listings
+        // Paginate the collected data
+        const paginatedListings = listings.slice((page - 1) * pageSize, page * pageSize);
+        const hasMore = listings.length > page * pageSize;
+
         return NextResponse.json({
             message: 'Search completed',
-            listings: firstListings,
+            listings: paginatedListings,
+            hasMore,
         });
-
-        // Note: The generator continues processing in the background
     } catch (error) {
         console.error('Error during scraping:', error);
         await scraper.close();
         return accessErrorResponse;
     }
-}
-
-export function GET() {
-    return NextResponse.json({ message: 'Method Not Allowed' }, { status: 405 });
 }
