@@ -11,8 +11,6 @@ export class FacebookMarketplaceScraper {
     private driverManager = new DriverManager();
     private driver: WebDriver | null = null;
     private processedListings = new Set<string>();
-    private collectedData: Array<ListingData> = [];
-    private collectedPromises: Array<Promise<ListingData | undefined>> = [];
 
     private navigator: Navigator | null = null;
     private popupHandler: PopupHandler | null = null;

@@ -46,13 +46,15 @@ export default function Home() {
         if (!hasSearched) setHasSearched(true);
         setSearchLoading(true);
 
-        const response = await fetch('/api/marketplace', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ searchTerm }),
-        });
+        const response = await fetch(
+            `/api/marketplace?searchTerm=${encodeURIComponent(searchTerm)}`,
+            {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
         const data = await response.json();
         setSearchResults(data['listings']);
 
