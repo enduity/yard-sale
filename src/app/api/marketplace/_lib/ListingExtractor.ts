@@ -37,19 +37,7 @@ export class ListingExtractor {
 
         // Get price
         const priceElement = elements[0];
-        let priceStr = await priceElement.getText();
-        const textDecoration = await priceElement.getCssValue('text-decoration-line');
-
-        if (textDecoration === 'line-through') {
-            const newPrice: string = await this.driver.executeScript(
-                'return arguments[0].parentElement.parentElement.innerText;',
-                priceElement
-            );
-            if (this.isPrice(newPrice)) {
-                priceStr = newPrice;
-            }
-        }
-
+        const priceStr = await priceElement.getText();
         const price: number = Math.round(parseFloat(priceStr.replace(/[^0-9.]/g, '')));
 
         // Get location and title
