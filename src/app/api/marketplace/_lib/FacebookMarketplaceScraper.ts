@@ -12,6 +12,7 @@ export class FacebookMarketplaceScraper {
     private driver: WebDriver | null = null;
     private processedListings = new Set<string>();
     private collectedData: Array<ListingData> = [];
+    private collectedPromises: Array<Promise<ListingData | undefined>> = [];
 
     private navigator: Navigator | null = null;
     private popupHandler: PopupHandler | null = null;
@@ -46,7 +47,7 @@ export class FacebookMarketplaceScraper {
         this.scrollManager = null;
     }
 
-    public async scrape(searchTerm: string): Promise<Array<ListingData>> {
+    public async *scrape(searchTerm: string): AsyncGenerator<ListingData> {
         if (
             !this.driver ||
             !this.navigator ||
@@ -73,50 +74,56 @@ export class FacebookMarketplaceScraper {
                 await this.navigator!.performSearch(searchTerm);
             });
 
-            await this.popupHandler.withPopupChecks(async () => {
-                await this.scrollManager!.scrollAndCollectListings(
-                    this.processListings.bind(this),
-                    this.listingExtractor!.getListingElements.bind(this.listingExtractor),
-                    this.popupHandler!.checkSeeMorePopup.bind(this.popupHandler),
-                    this.waitForNewContent.bind(this)
-                );
-            });
+            // Prepare the generator from scrollAndCollectListings
+            await this.popupHandler.checkSeeMorePopup();
+            const listingGenerator = this.scrollManager!.scrollAndCollectListings(
+                this.processListings.bind(this),
+                this.listingExtractor!.getListingElements.bind(this.listingExtractor),
+                this.popupHandler!.checkSeeMorePopup.bind(this.popupHandler),
+                this.waitForNewContent.bind(this)
+            );
 
-            return this.collectedData;
+            for await (const listingData of listingGenerator!) {
+                yield listingData;
+            }
         } catch (error) {
             console.error('Error during scraping:', error);
             throw error;
         }
     }
 
-    private async processListings(listings: WebElement[]): Promise<void> {
+    private async *processListings(listings: WebElement[]): AsyncGenerator<ListingData> {
         const maxConcurrency = 10;
 
         for (let i = 0; i < listings.length; i += maxConcurrency) {
             const batch = listings.slice(i, i + maxConcurrency);
-            await Promise.all(
-                batch.map(async (listing) => {
-                    try {
-                        const listingDetails =
-                            await this.listingExtractor!.getListingDetails(listing);
+            const promises = batch.map(async (listing) => {
+                try {
+                    const listingDetails =
+                        await this.listingExtractor!.getListingDetails(listing);
 
-                        if (!listingDetails) {
-                            return;
-                        }
-
-                        const idHash = this.listingExtractor!.hashListing(listingDetails);
-
-                        if (this.processedListings.has(idHash)) {
-                            return; // Already processed
-                        }
-
-                        this.collectedData.push(listingDetails);
-                        this.processedListings.add(idHash);
-                    } catch (error) {
-                        console.error('Error extracting data from listing:', error);
+                    if (!listingDetails) {
+                        return;
                     }
-                })
-            );
+
+                    const idHash = this.listingExtractor!.hashListing(listingDetails);
+
+                    if (this.processedListings.has(idHash)) {
+                        return;
+                    }
+
+                    this.processedListings.add(idHash);
+                    return listingDetails;
+                } catch (error) {
+                    console.error('Error extracting data from listing:', error);
+                }
+            });
+
+            for await (const listingData of promises) {
+                if (listingData) {
+                    yield listingData;
+                }
+            }
         }
     }
 
