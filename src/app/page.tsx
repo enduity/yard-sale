@@ -4,6 +4,7 @@ import { KeyboardEvent, useEffect, useState } from 'react';
 import { Listing } from '@/types';
 import { clsx } from 'clsx';
 import { getSuggestions } from '@/app/_util/getSuggestions';
+import Image from 'next/image';
 
 const SearchSuggestion = ({
     text,
@@ -210,15 +211,20 @@ export default function Home() {
                             {searchResults.map((listing, index) => (
                                 <div
                                     key={index}
-                                    className="flex flex-col rounded-lg bg-white p-4
-                                        shadow-md"
+                                    className="relative flex flex-col rounded-lg bg-white
+                                        p-4 shadow-md"
                                 >
-                                    <img
-                                        src={`/api/thumbnail?id=${listing.thumbnailId}`}
-                                        alt={listing.title}
-                                        className="mb-4 h-48 w-full rounded-md
-                                            object-cover"
-                                    />
+                                    <div
+                                        className="relative mb-4 aspect-square w-full
+                                            max-w-full overflow-hidden rounded-md"
+                                    >
+                                        <Image
+                                            src={`/api/thumbnail?id=${listing.thumbnailId}`}
+                                            alt={listing.title}
+                                            className="object-cover"
+                                            fill={true}
+                                        />
+                                    </div>
                                     <div className="flex flex-grow flex-col">
                                         <h2
                                             className="mb-1 text-lg font-semibold
