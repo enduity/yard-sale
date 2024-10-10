@@ -3,6 +3,7 @@ import { FacebookMarketplaceScraper } from './_lib/FacebookMarketplaceScraper';
 import { ListingData, Listing, ListingSource } from '@/types';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import ScrapeManager, { Scrape } from '@/app/api/marketplace/_lib/ScrapeManager';
 
 async function addSearchToDb(searchTerm: string) {
     const existingSearch = await prisma.search.findFirst({
@@ -97,14 +98,18 @@ export async function GET(req: NextRequest) {
     }
 
     const scraper = new FacebookMarketplaceScraper();
+    let scrape: Scrape | undefined;
     try {
-        await scraper.init();
+        const scrapeManager = ScrapeManager.getInstance();
 
         // Retrieve from cache first
         const cachedListings = await getFromCache(searchTerm);
 
-        // If we have enough cached data, paginate it and return
-        if (cachedListings.length && cachedListings.length >= (page - 1) * pageSize) {
+        if (
+            (cachedListings.length && !scrapeManager.alreadyScraping(searchTerm)) ||
+            (scrapeManager.alreadyScraping(searchTerm) &&
+                cachedListings.length >= page * pageSize)
+        ) {
             const paginatedListings = cachedListings.slice(
                 (page - 1) * pageSize,
                 page * pageSize
@@ -117,7 +122,25 @@ export async function GET(req: NextRequest) {
             });
         }
 
+        // Check if already scraping, this means enough data just isn't available yet
+        if (scrapeManager.alreadyScraping(searchTerm)) {
+            return NextResponse.json(
+                {
+                    message: 'This page is currently processing, please try again later.',
+                },
+                {
+                    status: 503,
+                    headers: {
+                        'Retry-After': '0.4',
+                    },
+                }
+            );
+        }
+
         // Fall back to scraping if cache is insufficient
+        await scraper.init();
+        scrape = scrapeManager.startScrape(searchTerm);
+
         const listingGenerator = scraper.scrape(searchTerm);
         const listings: Listing[] = [...cachedListings];
         let generatorError: unknown = null;
@@ -140,24 +163,28 @@ export async function GET(req: NextRequest) {
                 generatorError = error;
             } finally {
                 generatorDone = true;
+                scrape.end();
                 await scraper.close();
             }
         })();
 
         // Wait until we have enough data or an error occurs
         while (listings.length < page * pageSize && !generatorError && !generatorDone) {
-            await new Promise((res) => setTimeout(res, 100));
+            await new Promise((res) => setTimeout(res, 50));
         }
 
         if (generatorError) {
             console.error('Error during scraping:', generatorError);
             await scraper.close();
+            scrape.end();
             return accessErrorResponse;
         }
 
         // Paginate the collected data
         const paginatedListings = listings.slice((page - 1) * pageSize, page * pageSize);
-        const hasMore = listings.length > page * pageSize;
+        const hasMore =
+            listings.length > page * pageSize ||
+            scrapeManager.alreadyScraping(searchTerm);
 
         return NextResponse.json({
             message: 'Search completed',
@@ -167,6 +194,7 @@ export async function GET(req: NextRequest) {
     } catch (error) {
         console.error('Error during scraping:', error);
         await scraper.close();
+        if (typeof scrape !== 'undefined' && scrape !== null) scrape.end();
         return accessErrorResponse;
     }
 }
