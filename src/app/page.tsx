@@ -136,7 +136,7 @@ export default function Home() {
             <p className="mb-4 text-lg text-gray-600">
                 Find the best deals on used items across different platforms.
             </p>
-            <div className="mb-6 w-full max-w-xl">
+            <div className="relative z-10 mb-6 w-full max-w-xl">
                 <div className="relative mb-4 h-14 w-full">
                     <div
                         className="absolute left-0 top-0 w-full overflow-clip rounded-lg
