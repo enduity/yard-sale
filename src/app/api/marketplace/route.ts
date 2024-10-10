@@ -129,7 +129,9 @@ export async function GET(req: NextRequest) {
                 (page - 1) * pageSize,
                 page * pageSize
             );
-            const hasMore = cachedListings.length > page * pageSize;
+            const hasMore =
+                cachedListings.length > page * pageSize ||
+                scrapeManager.alreadyScraping(searchTerm);
             return NextResponse.json({
                 message: 'Cached search results',
                 listings: paginatedListings,
