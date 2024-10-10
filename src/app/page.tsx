@@ -1,60 +1,15 @@
 'use client';
 
 import { KeyboardEvent, useEffect, useState } from 'react';
-import { Listing } from '@/types';
+import { Listing as ListingModel } from '@/types';
 import { clsx } from 'clsx';
 import { getSuggestions } from '@/app/_util/getSuggestions';
-import Image from 'next/image';
-
-const SearchSuggestion = ({
-    text,
-    onSelect,
-    isHighlighted,
-    searchText,
-}: {
-    text: string;
-    onSelect: (term: string) => void;
-    isHighlighted: boolean;
-    searchText: string;
-}) => {
-    const textParts = [];
-    for (const word of searchText.split(' ')) {
-        const index = text.toLowerCase().indexOf(word.toLowerCase());
-        if (index === -1) {
-            break;
-        }
-        textParts.push({ text: text.slice(0, index), isHighlighted: false });
-        textParts.push({
-            text: text.slice(index, index + word.length),
-            isMatch: true,
-        });
-        text = text.slice(index + word.length);
-    }
-    textParts.push({ text, isHighlighted: false });
-    text = textParts.map(({ text }) => text).join('');
-
-    return (
-        <div
-            onClick={() => onSelect(text)}
-            onMouseDown={() => onSelect(text)}
-            className={clsx(
-                'pointer-events-auto relative cursor-pointer px-4 py-3 hover:bg-gray-200',
-                isHighlighted && 'bg-gray-200'
-            )}
-            role="button"
-        >
-            {textParts.map(({ text, isMatch }, index) => (
-                <span key={index} className={clsx(!isMatch && 'font-bold')}>
-                    {text}
-                </span>
-            ))}
-        </div>
-    );
-};
+import { Listing } from '@/app/_components/Listing';
+import { SearchSuggestion } from '@/app/_components/SearchSuggestion';
 
 export default function Home() {
     const [searchTerm, setSearchTerm] = useState('');
-    const [searchResults, setSearchResults] = useState<Listing[]>([]);
+    const [searchResults, setSearchResults] = useState<ListingModel[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
     const [previousSearches, setPreviousSearches] = useState<string[]>([]);
@@ -103,20 +58,23 @@ export default function Home() {
                 void handleSearch();
             }
             setShowDropdown(false);
-        } else if (event.key === 'ArrowDown') {
-            event.preventDefault();
+            return;
+        }
+        if (event.key === 'ArrowDown') {
             setHighlightedIndex((prevIndex) =>
                 Math.min(prevIndex + 1, searchSuggestions.length - 1)
             );
         } else if (event.key === 'ArrowUp') {
-            event.preventDefault();
             setHighlightedIndex((prevIndex) => Math.max(prevIndex - 1, 0));
         } else if (event.key === 'Tab' && showDropdown) {
-            event.preventDefault();
             setHighlightedIndex(
                 (prevIndex) => (prevIndex + 1) % searchSuggestions.length
             );
+        } else {
+            // Do not prevent default action if not one of the above keys
+            return;
         }
+        event.preventDefault();
     };
 
     const handleDropdownSelect = (term: string) => {
@@ -209,37 +167,7 @@ export default function Home() {
                                 lg:grid-cols-3"
                         >
                             {searchResults.map((listing, index) => (
-                                <div
-                                    key={index}
-                                    className="relative flex flex-col rounded-lg bg-white
-                                        p-4 shadow-md"
-                                >
-                                    <div
-                                        className="relative mb-4 aspect-square w-full
-                                            max-w-full overflow-hidden rounded-md"
-                                    >
-                                        <Image
-                                            src={`/api/thumbnail?id=${listing.thumbnailId}`}
-                                            alt={listing.title}
-                                            className="object-cover"
-                                            fill={true}
-                                        />
-                                    </div>
-                                    <div className="flex flex-grow flex-col">
-                                        <h2
-                                            className="mb-1 text-lg font-semibold
-                                                text-gray-800"
-                                        >
-                                            {listing.title}
-                                        </h2>
-                                        <p className="mb-2 text-sm text-gray-600">
-                                            {listing.location}
-                                        </p>
-                                        <p className="text-xl font-bold text-indigo-600">
-                                            ${listing.price.toString()}
-                                        </p>
-                                    </div>
-                                </div>
+                                <Listing listing={listing} key={index} />
                             ))}
                         </div>
                     ) : (
