@@ -1,4 +1,6 @@
 import { Listing as ListingModel } from '@/types';
+import { axiosInstance } from '@/lib/axiosInstance';
+import axios from 'axios';
 
 export async function* getListings(searchTerm: string): AsyncGenerator<ListingModel[]> {
     enum SearchStatus {
@@ -24,41 +26,42 @@ export async function* getListings(searchTerm: string): AsyncGenerator<ListingMo
           };
 
     const doRequest = async (page: number | null = null): Promise<SearchResponse> => {
-        let requestResponse: Response;
         try {
-            requestResponse = await fetch(
-                `/api/marketplace?searchTerm=${encodeURIComponent(searchTerm)}${page ? `&page=${page}` : ''}`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                }
-            );
+            const response = await axiosInstance.get(`/marketplace`, {
+                params: {
+                    searchTerm: encodeURIComponent(searchTerm),
+                    ...(page !== null && { page: page }),
+                },
+                timeout: 20000,
+            });
+
+            return {
+                status: SearchStatus.Success,
+                ...response.data,
+            };
         } catch (error) {
-            const errorMessage =
-                error instanceof Error ? error.message : (error as string);
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 503) {
+                    const waitTime =
+                        parseFloat(error.response.headers['retry-after'] ?? '0.4') * 1000;
+                    return {
+                        status: SearchStatus.Wait,
+                        waitTime: waitTime,
+                    };
+                }
+
+                const errorMessage = error.response?.data?.message || error.message;
+                return { status: SearchStatus.Fail, message: errorMessage };
+            }
+
+            let errorMessage: string;
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            } else {
+                errorMessage = 'Unknown error';
+            }
             return { status: SearchStatus.Fail, message: errorMessage };
         }
-        if (requestResponse.status === 503) {
-            const waitTime =
-                parseFloat(requestResponse.headers.get('Retry-After') ?? '0.4') * 1000;
-            return {
-                status: SearchStatus.Wait,
-                waitTime: waitTime,
-            };
-        }
-        if (!requestResponse.ok) {
-            return {
-                status: SearchStatus.Fail,
-                message: `Request failed, status ${requestResponse.status}, content ${requestResponse.body}`,
-            };
-        }
-        const requestData = await requestResponse.json();
-        return {
-            status: SearchStatus.Success,
-            ...requestData,
-        };
     };
 
     const firstData = await doRequest();

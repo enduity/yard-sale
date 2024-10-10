@@ -4,6 +4,9 @@ import { ListingData, Listing, ListingSource } from '@/types';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import ScrapeManager, { Scrape } from '@/app/api/marketplace/_lib/ScrapeManager';
+import { axiosInstance } from '@/lib/axiosInstance';
+import { axiosRetry } from '@/lib/axiosRetry';
+import axios from 'axios';
 
 async function addSearchToDb(searchTerm: string) {
     const existingSearch = await prisma.search.findFirst({
@@ -16,9 +19,19 @@ async function addSearchToDb(searchTerm: string) {
     return existingSearch;
 }
 
-async function bufferFromUrl(url: string) {
-    const image = await (await fetch(url)).arrayBuffer();
-    return Buffer.from(image);
+async function bufferFromUrl(url: string): Promise<Buffer | null> {
+    const axiosInstanceWithRetry = axios.create(axiosInstance.defaults);
+    axiosRetry(axiosInstanceWithRetry);
+    try {
+        const response = await axiosInstanceWithRetry.get(url, {
+            responseType: 'arraybuffer',
+            timeout: 5000,
+        });
+        return Buffer.from(response.data);
+    } catch (error) {
+        console.error('Failed to fetch the buffer:', error);
+        return null;
+    }
 }
 
 async function addToCache(listingData: ListingData, searchTerm: string) {
@@ -45,12 +58,14 @@ async function addToCache(listingData: ListingData, searchTerm: string) {
             source: ListingSource.Marketplace,
         },
     });
-    await prisma.thumbnail.create({
-        data: {
-            image: imageBuffer,
-            Listing: { connect: { id: listing.id } },
-        },
-    });
+    if (imageBuffer) {
+        await prisma.thumbnail.create({
+            data: {
+                image: imageBuffer,
+                Listing: { connect: { id: listing.id } },
+            },
+        });
+    }
     return prisma.listing.findFirstOrThrow({
         where: { url: listingData.url },
         include: { thumbnail: true },
