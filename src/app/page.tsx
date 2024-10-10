@@ -18,6 +18,7 @@ export default function Home() {
     const [previousSearches, setPreviousSearches] = useState<string[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
+    const [showHistoryCleared, setShowHistoryCleared] = useState(false);
 
     useEffect(() => {
         const storedSearches = localStorage.getItem('previousSearches');
@@ -128,6 +129,12 @@ export default function Home() {
         setHighlightedIndex(-1);
     };
 
+    const clearSearchHistory = () => {
+        setPreviousSearches([]);
+        localStorage.removeItem('previousSearches');
+        setShowHistoryCleared(true);
+    };
+
     const searchSuggestions = getSuggestions(previousSearches, searchTerm, 5);
 
     return (
@@ -142,25 +149,43 @@ export default function Home() {
                         className="absolute left-0 top-0 w-full overflow-clip rounded-lg
                             bg-white focus-within:ring-2 focus-within:ring-indigo-500"
                     >
-                        <input
-                            type="text"
-                            placeholder="Search for used items..."
-                            value={searchTerm}
-                            onChange={(e) => {
-                                setSearchTerm(e.target.value);
-                                setShowDropdown(true);
-                                setHighlightedIndex(-1);
-                            }}
-                            onKeyDown={handleKeyDown}
-                            onBlur={() => setShowDropdown(false)}
-                            className={clsx(
-                                `w-full rounded-lg border border-gray-300 p-4 shadow-sm
-                                focus:border-0 focus:outline-none`,
-                                showDropdown &&
-                                    searchSuggestions.length > 0 &&
-                                    'rounded-b-none border-0 border-b'
-                            )}
-                        />
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder="Search for used items..."
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setShowDropdown(true);
+                                    setHighlightedIndex(-1);
+                                }}
+                                onKeyDown={handleKeyDown}
+                                onBlur={() => setShowDropdown(false)}
+                                className={clsx(
+                                    `w-full rounded-lg border border-gray-300 p-4
+                                    shadow-sm focus:border-0 focus:outline-none`,
+                                    showDropdown &&
+                                        searchSuggestions.length > 0 &&
+                                        'rounded-b-none border-0 border-b'
+                                )}
+                            />
+                            <div
+                                className={clsx(
+                                    `pointer-events-none absolute left-0 top-0 flex h-full
+                                    w-full items-center justify-center rounded-lg border-2
+                                    border-emerald-800 bg-green-200 text-center
+                                    font-semibold transition-opacity duration-150`,
+                                    showHistoryCleared && 'opacity-100 duration-150',
+                                    !showHistoryCleared &&
+                                        'opacity-0 delay-[2s] duration-1000'
+                                )}
+                                onTransitionEnd={() =>
+                                    showHistoryCleared && setShowHistoryCleared(false)
+                                }
+                            >
+                                Search history cleared!
+                            </div>
+                        </div>
                         {showDropdown && searchSuggestions.length > 0 && (
                             <>
                                 <div className="divide-y border-b">
@@ -177,10 +202,20 @@ export default function Home() {
                                 <div className="grid grid-cols-2 gap-2 p-2">
                                     <button
                                         onClick={handleSearch}
+                                        onMouseDown={handleSearch}
                                         className="rounded-md bg-indigo-600 py-3
                                             font-semibold text-white hover:bg-indigo-700"
                                     >
                                         Search
+                                    </button>
+                                    <button
+                                        onClick={clearSearchHistory}
+                                        onMouseDown={clearSearchHistory}
+                                        className="rounded-md border-2 border-indigo-600
+                                            bg-white py-3 font-semibold text-black
+                                            hover:bg-indigo-100"
+                                    >
+                                        Clear History
                                     </button>
                                 </div>
                             </>
