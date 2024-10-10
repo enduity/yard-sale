@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@prisma/client": "5.20.0",
+    "axios": "^1.7.7",
     "clsx": "^2.1.1",
     "fastest-levenshtein": "^1.0.16",
     "next": "14.2.14",
