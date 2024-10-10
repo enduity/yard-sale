@@ -1,15 +1,18 @@
 'use client';
 
-import { KeyboardEvent, useEffect, useState } from 'react';
+import { KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { Listing as ListingModel } from '@/types';
 import { clsx } from 'clsx';
 import { getSuggestions } from '@/app/_util/getSuggestions';
 import { Listing } from '@/app/_components/Listing';
 import { SearchSuggestion } from '@/app/_components/SearchSuggestion';
+import { getListings } from '@/app/_util/getListings';
 
 export default function Home() {
     const [searchTerm, setSearchTerm] = useState('');
+    const executedSearchTerm = useRef('');
     const [searchResults, setSearchResults] = useState<ListingModel[]>([]);
+    const searchResultsRef = useRef<ListingModel[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
     const [previousSearches, setPreviousSearches] = useState<string[]>([]);
@@ -23,32 +26,74 @@ export default function Home() {
         }
     }, []);
 
-    const handleSearch = async () => {
-        if (!searchTerm) return;
-        if (!hasSearched) setHasSearched(true);
-        setSearchLoading(true);
-
-        const response = await fetch(
-            `/api/marketplace?searchTerm=${encodeURIComponent(searchTerm)}`,
-            {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+    /**
+     * Handles new search results
+     *
+     * @param resultSearchTerm The search term the result is associated with
+     * @param newResults The new results
+     * @returns Whether the search being executed matches the result's search term
+     */
+    const handleNewResults = useCallback(
+        (resultSearchTerm: string, newResults: ListingModel[]): boolean => {
+            if (resultSearchTerm !== executedSearchTerm.current) {
+                return false;
             }
-        );
-        const data = await response.json();
-        setSearchResults(data['listings']);
+            const newSearchResults = searchResultsRef.current.concat(newResults);
+            setSearchResults(newSearchResults);
+            searchResultsRef.current = newSearchResults;
+            setSearchLoading(false);
+            return true;
+        },
+        []
+    );
+
+    const handleSearchExecuted = useCallback(
+        async (handledSearchTerm: string) => {
+            console.log('Handling executed search');
+            const dataArray = getListings(handledSearchTerm);
+            for await (const data of dataArray) {
+                console.log('Received data');
+                const continueLoop = handleNewResults(handledSearchTerm, data);
+                if (!continueLoop) break;
+                console.log('Received continue');
+            }
+        },
+        [handleNewResults]
+    );
+
+    const handleSearch = useCallback(async () => {
+        console.log('Handling search...');
+        setSearchResults([]);
+        searchResultsRef.current = [];
+        setHasSearched(true);
+        setSearchLoading(true);
+    }, []);
+
+    useEffect(() => {
+        console.log('Search effect called');
+        if (!searchLoading) return;
+        if (searchResults.length !== 0) return;
+        if (!hasSearched) return;
+        if (executedSearchTerm.current === searchTerm) return;
+        executedSearchTerm.current = searchTerm;
+
+        handleSearchExecuted(executedSearchTerm.current).then();
 
         const updatedSearches = [
             searchTerm,
             ...previousSearches.filter((term) => term !== searchTerm),
         ].slice(0, 10);
         setPreviousSearches(updatedSearches);
-        setSearchLoading(false);
 
         localStorage.setItem('previousSearches', JSON.stringify(updatedSearches));
-    };
+    }, [
+        searchLoading,
+        searchResults,
+        searchTerm,
+        hasSearched,
+        handleSearchExecuted,
+        previousSearches,
+    ]);
 
     const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter') {
