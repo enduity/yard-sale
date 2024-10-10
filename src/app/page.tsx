@@ -3,27 +3,53 @@
 import { KeyboardEvent, useEffect, useState } from 'react';
 import { Listing } from '@/types';
 import { clsx } from 'clsx';
-import { getLevenshteinDistance } from './_util/getLevenshteinDistance';
+import { getSuggestions } from '@/app/_util/getSuggestions';
 
-function getSearchSuggestions(
-    previousSearches: string[],
-    searchTerm: string,
-    maxSuggestions: number = 5
-): string[] {
-    if (!searchTerm) return [];
+const SearchSuggestion = ({
+    text,
+    onSelect,
+    isHighlighted,
+    searchText,
+}: {
+    text: string;
+    onSelect: (term: string) => void;
+    isHighlighted: boolean;
+    searchText: string;
+}) => {
+    const textParts = [];
+    for (const word of searchText.split(' ')) {
+        const index = text.toLowerCase().indexOf(word.toLowerCase());
+        if (index === -1) {
+            break;
+        }
+        textParts.push({ text: text.slice(0, index), isHighlighted: false });
+        textParts.push({
+            text: text.slice(index, index + word.length),
+            isMatch: true,
+        });
+        text = text.slice(index + word.length);
+    }
+    textParts.push({ text, isHighlighted: false });
+    text = textParts.map(({ text }) => text).join('');
 
-    return previousSearches
-        .map((term) => ({
-            term,
-            distance: getLevenshteinDistance(
-                term.toLowerCase(),
-                searchTerm.toLowerCase()
-            ),
-        }))
-        .sort((a, b) => a.distance - b.distance)
-        .slice(0, maxSuggestions)
-        .map((result) => result.term);
-}
+    return (
+        <div
+            onClick={() => onSelect(text)}
+            onMouseDown={() => onSelect(text)}
+            className={clsx(
+                'pointer-events-auto relative cursor-pointer px-4 py-3 hover:bg-gray-200',
+                isHighlighted && 'bg-gray-200'
+            )}
+            role="button"
+        >
+            {textParts.map(({ text, isMatch }, index) => (
+                <span key={index} className={clsx(!isMatch && 'font-bold')}>
+                    {text}
+                </span>
+            ))}
+        </div>
+    );
+};
 
 export default function Home() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -98,7 +124,7 @@ export default function Home() {
         setHighlightedIndex(-1);
     };
 
-    const searchSuggestions = getSearchSuggestions(previousSearches, searchTerm, 5);
+    const searchSuggestions = getSuggestions(previousSearches, searchTerm, 5);
 
     return (
         <div className="flex min-h-screen flex-col items-center bg-gray-100 px-4 py-8">
@@ -110,7 +136,7 @@ export default function Home() {
                 <div className="relative mb-4 h-14 w-full">
                     <div
                         className="absolute left-0 top-0 w-full overflow-clip rounded-lg
-                            focus-within:ring-2 focus-within:ring-indigo-500"
+                            bg-white focus-within:ring-2 focus-within:ring-indigo-500"
                     >
                         <input
                             type="text"
@@ -125,32 +151,35 @@ export default function Home() {
                             onBlur={() => setShowDropdown(false)}
                             className={clsx(
                                 `w-full rounded-lg border border-gray-300 p-4 shadow-sm
-                                focus:outline-none`,
+                                focus:border-0 focus:outline-none`,
                                 showDropdown &&
                                     searchSuggestions.length > 0 &&
                                     'rounded-b-none border-0 border-b'
                             )}
                         />
                         {showDropdown && searchSuggestions.length > 0 && (
-                            <div className="max-h-48 rounded-lg rounded-t-none bg-white">
-                                {searchSuggestions.map((term, index) => (
-                                    <div
-                                        key={index}
-                                        onClick={() => handleDropdownSelect(term)}
-                                        onMouseDown={() => handleDropdownSelect(term)}
-                                        className={clsx(
-                                            `pointer-events-auto relative cursor-pointer
-                                            px-4 py-3 hover:bg-gray-100`,
-                                            index === highlightedIndex && 'bg-gray-200',
-                                            index === searchSuggestions.length - 1 &&
-                                                'rounded-b-lg'
-                                        )}
-                                        role="button"
+                            <>
+                                <div className="divide-y border-b">
+                                    {searchSuggestions.map((term, index) => (
+                                        <SearchSuggestion
+                                            key={term}
+                                            text={term}
+                                            onSelect={handleDropdownSelect}
+                                            isHighlighted={index === highlightedIndex}
+                                            searchText={searchTerm}
+                                        />
+                                    ))}
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 p-2">
+                                    <button
+                                        onClick={handleSearch}
+                                        className="rounded-md bg-indigo-600 py-3
+                                            font-semibold text-white hover:bg-indigo-700"
                                     >
-                                        {term}
-                                    </div>
-                                ))}
-                            </div>
+                                        Search
+                                    </button>
+                                </div>
+                            </>
                         )}
                     </div>
                 </div>
