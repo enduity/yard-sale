@@ -25,28 +25,34 @@ async function addToCache(listingData: ListingData, searchTerm: string) {
 
     // First, add the search term (if it doesn't exist)
     const search = await addSearchToDb(searchTerm);
-    // Second, add the thumbnail
-    const thumbnail = await prisma.thumbnail.create({
-        data: { image: imageBuffer },
-    });
     // Check if the listing already exists
     const existingListing = await prisma.listing.findFirst({
         where: { url: listingData.url },
+        include: { thumbnail: true },
     });
     if (existingListing) {
         return existingListing;
     }
-    // Finally, add the listing
-    return prisma.listing.create({
+    // Add the listing
+    const listing = await prisma.listing.create({
         data: {
             price: listingData.price,
             title: listingData.title,
             location: listingData.location,
             url: listingData.url,
             searchId: search.id,
-            thumbnailId: thumbnail.id,
             source: ListingSource.Marketplace,
         },
+    });
+    await prisma.thumbnail.create({
+        data: {
+            image: imageBuffer,
+            Listing: { connect: { id: listing.id } },
+        },
+    });
+    return prisma.listing.findFirstOrThrow({
+        where: { url: listingData.url },
+        include: { thumbnail: true },
     });
 }
 
@@ -125,7 +131,7 @@ export async function GET(req: NextRequest) {
                         price: new Prisma.Decimal(listingData.price),
                         title: listingData.title,
                         location: listingData.location,
-                        thumbnailId: cacheEntry.thumbnailId ?? undefined,
+                        thumbnailId: cacheEntry.thumbnail?.id,
                         url: listingData.url,
                         source: ListingSource.Marketplace,
                     });

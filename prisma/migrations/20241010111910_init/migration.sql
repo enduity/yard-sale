@@ -6,21 +6,24 @@ CREATE TABLE "Listing" (
     "title" TEXT NOT NULL,
     "price" DECIMAL NOT NULL,
     "location" TEXT NOT NULL,
-    "thumbnailId" INTEGER,
     "searchId" INTEGER NOT NULL,
-    CONSTRAINT "Listing_thumbnailId_fkey" FOREIGN KEY ("thumbnailId") REFERENCES "Thumbnail" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "Listing_searchId_fkey" FOREIGN KEY ("searchId") REFERENCES "Search" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "Listing_searchId_fkey" FOREIGN KEY ("searchId") REFERENCES "Search" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "Thumbnail" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "image" BLOB NOT NULL
+    "image" BLOB NOT NULL,
+    "listingId" INTEGER NOT NULL,
+    CONSTRAINT "Thumbnail_listingId_fkey" FOREIGN KEY ("listingId") REFERENCES "Listing" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "Search" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "query" TEXT NOT NULL,
-    "time" DATETIME NOT NULL
+    "time" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Thumbnail_listingId_key" ON "Thumbnail"("listingId");

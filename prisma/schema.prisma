@@ -8,22 +8,22 @@ datasource db {
 }
 
 model Listing {
-  id          Int        @id @default(autoincrement())
-  source      String
-  url         String
-  title       String
-  price       Decimal
-  location    String
-  thumbnail   Thumbnail? @relation(fields: [thumbnailId], references: [id])
-  thumbnailId Int?
-  Search      Search    @relation("SearchListings", fields: [searchId], references: [id])
-  searchId    Int
+  id        Int        @id @default(autoincrement())
+  source    String
+  url       String
+  title     String
+  price     Decimal
+  location  String
+  thumbnail Thumbnail?
+  Search    Search     @relation("SearchListings", fields: [searchId], references: [id], onDelete: Cascade)
+  searchId  Int
 }
 
 model Thumbnail {
-  id      Int       @id @default(autoincrement())
-  image   Bytes
-  Listing Listing[]
+  id        Int     @id @default(autoincrement())
+  image     Bytes
+  Listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listingId Int     @unique
 }
 
 model Search {
