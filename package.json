@@ -10,10 +10,13 @@
   },
   "dependencies": {
     "@prisma/client": "5.20.0",
+    "@types/jsdom": "^21.1.7",
     "axios": "^1.7.7",
     "clsx": "^2.1.1",
     "fastest-levenshtein": "^1.0.16",
+    "jsdom": "^25.0.1",
     "next": "14.2.14",
+    "puppeteer": "^23.5.3",
     "react": "^18",
     "react-dom": "^18",
     "selenium-webdriver": "^4.25.0",
