@@ -16,6 +16,23 @@ export class ListingExtractor {
         return await this.driver.findElements(By.css(listingCssSelector));
     }
 
+    private cleanMarketplaceUrl(url: string): string {
+        try {
+            const parsedUrl = new URL(url);
+            const path = parsedUrl.pathname;
+            const itemPathMatch = path.match(/^\/marketplace\/item\/\d+/);
+            if (itemPathMatch) {
+                return `${parsedUrl.origin}${itemPathMatch[0]}`;
+            } else {
+                console.error('Error cleaning URL:', url);
+                return url;
+            }
+        } catch (error) {
+            console.error('Error cleaning URL:', error);
+            return url;
+        }
+    }
+
     public async getListingDetails(
         listingElement: WebElement
     ): Promise<ListingData | null> {
@@ -80,7 +97,7 @@ export class ListingExtractor {
         // Get the listing URL
         let url = '';
         try {
-            url = await listingElement.getAttribute('href');
+            url = this.cleanMarketplaceUrl(await listingElement.getAttribute('href'));
         } catch (error) {
             console.warn('Error getting listing URL:', error);
         }

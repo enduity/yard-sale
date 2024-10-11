@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { FacebookMarketplaceScraper } from './_lib/FacebookMarketplaceScraper';
+import { fetchFirstListings, Location } from './_lib/fetchFirstListings';
 import { ListingData, Listing, ListingSource } from '@/types';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-import ScrapeManager, { Scrape } from '@/app/api/marketplace/_lib/ScrapeManager';
+import ScrapeManager from '@/app/api/marketplace/_lib/ScrapeManager';
 import { axiosInstance } from '@/lib/axiosInstance';
 import { axiosRetry } from '@/lib/axiosRetry';
 import axios from 'axios';
@@ -50,7 +51,7 @@ async function addToCache(listingData: ListingData, searchTerm: string) {
     // Add the listing
     const listing = await prisma.listing.create({
         data: {
-            price: listingData.price,
+            price: new Prisma.Decimal(listingData.price),
             title: listingData.title,
             location: listingData.location,
             url: listingData.url,
@@ -67,7 +68,7 @@ async function addToCache(listingData: ListingData, searchTerm: string) {
         });
     }
     return prisma.listing.findFirstOrThrow({
-        where: { url: listingData.url },
+        where: { id: listing.id },
         include: { thumbnail: true },
     });
 }
@@ -112,106 +113,105 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'searchTerm is required' }, { status: 400 });
     }
 
-    const scraper = new FacebookMarketplaceScraper();
-    let scrape: Scrape | undefined;
-    try {
-        const scrapeManager = ScrapeManager.getInstance();
+    const scrapeManager = ScrapeManager.getInstance();
 
-        // Retrieve from cache first
-        const cachedListings = await getFromCache(searchTerm);
+    // Retrieve from cache first
+    let cachedListings = await getFromCache(searchTerm);
 
-        if (
-            (cachedListings.length && !scrapeManager.alreadyScraping(searchTerm)) ||
-            (scrapeManager.alreadyScraping(searchTerm) &&
-                cachedListings.length >= page * pageSize)
-        ) {
-            const paginatedListings = cachedListings.slice(
-                (page - 1) * pageSize,
-                page * pageSize
-            );
-            const hasMore =
-                cachedListings.length > page * pageSize ||
-                scrapeManager.alreadyScraping(searchTerm);
-            return NextResponse.json({
-                message: 'Cached search results',
-                listings: paginatedListings,
-                hasMore,
-            });
-        }
-
-        // Check if already scraping, this means enough data just isn't available yet
-        if (scrapeManager.alreadyScraping(searchTerm)) {
-            return NextResponse.json(
-                {
-                    message: 'This page is currently processing, please try again later.',
-                },
-                {
-                    status: 503,
-                    headers: {
-                        'Retry-After': '0.4',
-                    },
-                }
-            );
-        }
-
-        // Fall back to scraping if cache is insufficient
-        await scraper.init();
-        scrape = scrapeManager.startScrape(searchTerm);
-
-        const listingGenerator = scraper.scrape(searchTerm);
-        const listings: Listing[] = [...cachedListings];
-        let generatorError: unknown = null;
-        let generatorDone = false;
-
-        void (async () => {
-            try {
-                for await (const listingData of listingGenerator) {
-                    const cacheEntry = await addToCache(listingData, searchTerm);
-                    listings.push({
-                        price: new Prisma.Decimal(listingData.price),
-                        title: listingData.title,
-                        location: listingData.location,
-                        thumbnailId: cacheEntry.thumbnail?.id,
-                        url: listingData.url,
-                        source: ListingSource.Marketplace,
-                    });
-                }
-            } catch (error) {
-                generatorError = error;
-            } finally {
-                generatorDone = true;
-                scrape.end();
-                await scraper.close();
-            }
-        })();
-
-        // Wait until we have enough data or an error occurs
-        while (listings.length < page * pageSize && !generatorError && !generatorDone) {
-            await new Promise((res) => setTimeout(res, 50));
-        }
-
-        if (generatorError) {
-            console.error('Error during scraping:', generatorError);
-            await scraper.close();
-            scrape.end();
-            return accessErrorResponse;
-        }
-
-        // Paginate the collected data
-        const paginatedListings = listings.slice((page - 1) * pageSize, page * pageSize);
+    if (
+        (cachedListings.length && !scrapeManager.alreadyScraping(searchTerm)) ||
+        (scrapeManager.alreadyScraping(searchTerm) &&
+            cachedListings.length >= page * pageSize)
+    ) {
+        const paginatedListings = cachedListings.slice(
+            (page - 1) * pageSize,
+            page * pageSize
+        );
         const hasMore =
-            listings.length > page * pageSize ||
+            cachedListings.length > page * pageSize ||
             scrapeManager.alreadyScraping(searchTerm);
-
         return NextResponse.json({
-            message: 'Search completed',
+            message: 'Cached search results',
             listings: paginatedListings,
             hasMore,
         });
+    }
+
+    // Check if already scraping, this means enough data just isn't available yet
+    if (scrapeManager.alreadyScraping(searchTerm)) {
+        return NextResponse.json(
+            {
+                message: 'This page is currently processing, please try again later.',
+            },
+            {
+                status: 503,
+                headers: {
+                    'Retry-After': '0.4',
+                },
+            }
+        );
+    }
+
+    // Fetch first listings using fetchFirstListings
+    const options = {
+        query: searchTerm,
+        location: Location.Tallinn,
+    };
+
+    let firstListings: ListingData[];
+
+    try {
+        firstListings = await fetchFirstListings(options);
     } catch (error) {
-        console.error('Error during scraping:', error);
-        await scraper.close();
-        if (typeof scrape !== 'undefined' && scrape !== null) scrape.end();
+        console.error('Error fetching first listings:', error);
         return accessErrorResponse;
     }
+
+    // Cache the first listings
+    for (const listingData of firstListings) {
+        await addToCache(listingData, searchTerm);
+    }
+
+    // Get updated cached listings
+    cachedListings = await getFromCache(searchTerm);
+
+    // Start the scraper in the background
+    const scrape = scrapeManager.startScrape(searchTerm);
+
+    void (async () => {
+        const scraper = new FacebookMarketplaceScraper();
+        try {
+            await scraper.init();
+            const listingGenerator = scraper.scrape(searchTerm);
+            for await (const listingData of listingGenerator) {
+                // Deduplicate listings
+                const exists = await prisma.listing.findFirst({
+                    where: { url: listingData.url },
+                });
+                if (!exists) {
+                    await addToCache(listingData, searchTerm);
+                }
+            }
+        } catch (error) {
+            console.error('Error during scraping:', error);
+        } finally {
+            scrape.end();
+            await scraper.close();
+        }
+    })();
+
+    // Paginate the collected data
+    const paginatedListings = cachedListings.slice(
+        (page - 1) * pageSize,
+        page * pageSize
+    );
+    const hasMore =
+        cachedListings.length > page * pageSize ||
+        scrapeManager.alreadyScraping(searchTerm);
+
+    return NextResponse.json({
+        message: 'Fetched initial listings',
+        listings: paginatedListings,
+        hasMore,
+    });
 }
