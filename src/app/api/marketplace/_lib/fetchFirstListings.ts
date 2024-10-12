@@ -61,7 +61,7 @@ function urlGenerator(options: MarketPlaceOptions): string {
 }
 
 export async function fetchFirstListings(
-    options: MarketPlaceOptions
+    options: MarketPlaceOptions,
 ): Promise<ListingData[]> {
     const url = urlGenerator(options);
 
@@ -77,7 +77,7 @@ export async function fetchFirstListings(
 
     const dom = new JSDOM(htmlContent);
     const scriptTags = dom.window.document.querySelectorAll(
-        'script[type="application/json"]'
+        'script[type="application/json"]',
     );
 
     for (const scriptTag of scriptTags) {

@@ -1,4 +1,4 @@
-import { WebDriver, WebElement, By, until } from 'selenium-webdriver';
+import { By, until, WebDriver, WebElement } from 'selenium-webdriver';
 import { NoSuchElementError } from 'selenium-webdriver/lib/error';
 
 export class PopupHandler {
@@ -14,13 +14,13 @@ export class PopupHandler {
             if (wait) {
                 seeMorePopup = await this.driver.wait(
                     until.elementLocated(
-                        By.xpath('//div[contains(., "See more on Facebook")]')
+                        By.xpath('//div[contains(., "See more on Facebook")]'),
                     ),
-                    10000
+                    10000,
                 );
             } else {
                 seeMorePopup = await this.driver.findElement(
-                    By.xpath('//div[contains(., "See more on Facebook")]')
+                    By.xpath('//div[contains(., "See more on Facebook")]'),
                 );
             }
         } catch (error) {
@@ -32,7 +32,7 @@ export class PopupHandler {
         let closeButton: WebElement;
         try {
             closeButton = await seeMorePopup.findElement(
-                By.xpath('.//div[@aria-label="Close" and @role="button"]')
+                By.xpath('.//div[@aria-label="Close" and @role="button"]'),
             );
         } catch (error) {
             if (error instanceof NoSuchElementError) {
@@ -49,14 +49,18 @@ export class PopupHandler {
         if (wait) {
             loginPopupText = await this.driver.wait(
                 until.elementLocated(
-                    By.xpath('//span[contains(., "Log in or sign up for") and not(span)]')
+                    By.xpath(
+                        '//span[contains(., "Log in or sign up for") and not(span)]',
+                    ),
                 ),
-                10000
+                10000,
             );
         } else {
             try {
                 loginPopupText = await this.driver.findElement(
-                    By.xpath('//span[contains(., "Log in or sign up for") and not(span)]')
+                    By.xpath(
+                        '//span[contains(., "Log in or sign up for") and not(span)]',
+                    ),
                 );
             } catch (error) {
                 if (error instanceof NoSuchElementError) {
@@ -81,19 +85,19 @@ export class PopupHandler {
         `;
         const fixedParent: WebElement = await this.driver.executeScript(
             script,
-            loginPopupText
+            loginPopupText,
         );
         if (fixedParent) {
             await this.driver.executeScript(
                 'arguments[0].style.display = "none";',
-                fixedParent
+                fixedParent,
             );
         }
     }
 
     public async withPopupChecks(
         action: () => Promise<void>,
-        wait: boolean = false
+        wait: boolean = false,
     ): Promise<void> {
         await this.checkSeeMorePopup(wait);
         await this.checkLoginPopup(wait);

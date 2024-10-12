@@ -12,13 +12,13 @@ export class ScrollManager {
         processListings: (listings: WebElement[]) => AsyncGenerator<ListingData>,
         getListingElements: () => Promise<WebElement[]>,
         checkSeeMorePopup: () => Promise<boolean>,
-        waitForNewContent: (listings: WebElement[]) => Promise<boolean>
+        waitForNewContent: (listings: WebElement[]) => Promise<boolean>,
     ): AsyncGenerator<ListingData> {
         const mainScrollableContainer = await this.findMainScrollableContainer();
         let previousScrollPosition: number = 0;
         if (mainScrollableContainer) {
             previousScrollPosition = await this.getScrollPosition(
-                mainScrollableContainer
+                mainScrollableContainer,
             );
         }
 
@@ -40,7 +40,7 @@ export class ScrollManager {
 
             const newScrollPosition: number = await this.driver.executeScript(
                 'arguments[0].scrollTop = Math.min(arguments[0].scrollHeight, arguments[0].scrollTop + (window.innerHeight * 2)); return arguments[0].scrollTop;',
-                mainScrollableContainer
+                mainScrollableContainer,
             );
 
             const newContentLoaded = await waitForNewContent(listings);
@@ -93,11 +93,11 @@ export class ScrollManager {
     }
 
     private async getScrollPosition(
-        mainScrollableContainer: WebElement
+        mainScrollableContainer: WebElement,
     ): Promise<number> {
         const scrollPosition = await this.driver.executeScript(
             'return arguments[0].scrollTop;',
-            mainScrollableContainer
+            mainScrollableContainer,
         );
         if (typeof scrollPosition !== 'number') {
             throw new Error('Could not get the scroll position.');

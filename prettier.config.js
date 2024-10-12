@@ -3,16 +3,14 @@ module.exports = {
     tabWidth: 4,
     useTabs: false,
     semi: true,
-    trailingComma: 'es5',
+    trailingComma: 'all',
     singleQuote: true,
     plugins: [
         'prettier-plugin-tailwindcss',
         'prettier-plugin-classnames',
-        'prettier-plugin-merge'
+        'prettier-plugin-merge',
     ],
-    tailwindFunctions: [
-        'clsx'
-    ],
+    tailwindFunctions: ['clsx'],
     endingPosition: 'absolute-with-indent',
     printWidth: 90,
 };

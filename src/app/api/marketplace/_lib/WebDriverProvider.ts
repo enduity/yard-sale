@@ -15,7 +15,7 @@ export class WebDriverProvider {
         options.addArguments(
             '--disable-blink-features=AutomationControlled',
             '--window-size=2560,1440',
-            '--headless'
+            '--headless',
         );
         this._driver = new Builder()
             .forBrowser(Browser.CHROME)

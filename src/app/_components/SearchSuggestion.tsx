@@ -35,7 +35,7 @@ export function SearchSuggestion({
             onMouseDown={() => onSelect(text)}
             className={clsx(
                 'pointer-events-auto relative cursor-pointer px-4 py-3 hover:bg-gray-200',
-                isHighlighted && 'bg-gray-200'
+                isHighlighted && 'bg-gray-200',
             )}
             role="button"
         >

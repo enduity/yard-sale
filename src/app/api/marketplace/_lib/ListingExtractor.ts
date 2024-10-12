@@ -1,4 +1,4 @@
-import { WebDriver, WebElement, By } from 'selenium-webdriver';
+import { By, WebDriver, WebElement } from 'selenium-webdriver';
 import { StaleElementReferenceError } from 'selenium-webdriver/lib/error';
 import { ListingData } from '@/types';
 import crypto from 'crypto';
@@ -34,7 +34,7 @@ export class ListingExtractor {
     }
 
     public async getListingDetails(
-        listingElement: WebElement
+        listingElement: WebElement,
     ): Promise<ListingData | null> {
         const listingDetailsSelector = 'span:not(:has(span, i)):not(:empty)';
         let elements: WebElement[];
