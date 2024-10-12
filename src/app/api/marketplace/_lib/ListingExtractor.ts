@@ -55,7 +55,11 @@ export class ListingExtractor {
         // Get price
         const priceElement = elements[0];
         const priceStr = await priceElement.getText();
-        const price: number = Math.round(parseFloat(priceStr.replace(/[^0-9.]/g, '')));
+        let price: number;
+        price = Math.round(parseFloat(priceStr.replace(/[^0-9.]/g, '')));
+        if (priceStr.toLowerCase().includes('free') || isNaN(price)) {
+            price = 0;
+        }
 
         // Get location and title
         let location = '';
