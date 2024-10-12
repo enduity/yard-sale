@@ -19,6 +19,12 @@ export default function Home() {
     const [showDropdown, setShowDropdown] = useState(false);
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const [showHistoryCleared, setShowHistoryCleared] = useState(false);
+    const dataGeneratorRef = useRef<AsyncGenerator<ListingModel[], void, unknown> | null>(
+        null,
+    );
+    const isFetchingRef = useRef<boolean>(false);
+    const [hasMoreData, setHasMoreData] = useState<boolean>(true);
+    const bottomBoundaryRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         const storedSearches = localStorage.getItem('previousSearches');
@@ -27,58 +33,41 @@ export default function Home() {
         }
     }, []);
 
-    /**
-     * Handles new search results
-     *
-     * @param resultSearchTerm The search term the result is associated with
-     * @param newResults The new results
-     * @returns Whether the search being executed matches the result's search term
-     */
-    const handleNewResults = useCallback(
-        (resultSearchTerm: string, newResults: ListingModel[]): boolean => {
-            if (resultSearchTerm !== executedSearchTerm.current) {
-                return false;
+    const fetchNextDataBatch = useCallback(async () => {
+        if (dataGeneratorRef.current && !isFetchingRef.current) {
+            isFetchingRef.current = true;
+            try {
+                const { value: data, done } = await dataGeneratorRef.current.next();
+                if (data && executedSearchTerm.current === searchTerm) {
+                    console.log('Fetched data:', data);
+                    const newSearchResults = searchResultsRef.current.concat(data);
+                    setSearchResults(newSearchResults);
+                    searchResultsRef.current = newSearchResults;
+                }
+                if (done) {
+                    console.log('No more data to fetch');
+                    setHasMoreData(false);
+                    setSearchLoading(false);
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                setHasMoreData(false);
+                setSearchLoading(false);
+            } finally {
+                isFetchingRef.current = false;
             }
-            const newSearchResults = searchResultsRef.current.concat(newResults);
-            setSearchResults(newSearchResults);
-            searchResultsRef.current = newSearchResults;
-            setSearchLoading(false);
-            return true;
-        },
-        [],
-    );
-
-    const handleSearchExecuted = useCallback(
-        async (handledSearchTerm: string) => {
-            console.log('Handling executed search');
-            const dataArray = getListings(handledSearchTerm);
-            for await (const data of dataArray) {
-                console.log('Received data');
-                const continueLoop = handleNewResults(handledSearchTerm, data);
-                if (!continueLoop) break;
-                console.log('Received continue');
-            }
-        },
-        [handleNewResults],
-    );
+        }
+    }, [searchTerm]);
 
     const handleSearch = useCallback(async () => {
         console.log('Handling search...');
         setSearchResults([]);
         searchResultsRef.current = [];
         setHasSearched(true);
+        setHasMoreData(true);
         setSearchLoading(true);
-    }, []);
-
-    useEffect(() => {
-        console.log('Search effect called');
-        if (!searchLoading) return;
-        if (searchResults.length !== 0) return;
-        if (!hasSearched) return;
-        if (executedSearchTerm.current === searchTerm) return;
         executedSearchTerm.current = searchTerm;
-
-        handleSearchExecuted(executedSearchTerm.current).then();
+        dataGeneratorRef.current = getListings(searchTerm);
 
         const updatedSearches = [
             searchTerm,
@@ -87,14 +76,32 @@ export default function Home() {
         setPreviousSearches(updatedSearches);
 
         localStorage.setItem('previousSearches', JSON.stringify(updatedSearches));
-    }, [
-        searchLoading,
-        searchResults,
-        searchTerm,
-        hasSearched,
-        handleSearchExecuted,
-        previousSearches,
-    ]);
+
+        void fetchNextDataBatch();
+    }, [searchTerm, previousSearches, fetchNextDataBatch]);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const firstEntry = entries[0];
+                if (firstEntry.isIntersecting && hasMoreData) {
+                    void fetchNextDataBatch();
+                }
+            },
+            { threshold: 1 },
+        );
+
+        const bottomBoundaryRefCurrent = bottomBoundaryRef.current;
+        if (bottomBoundaryRefCurrent) {
+            observer.observe(bottomBoundaryRefCurrent);
+        }
+
+        return () => {
+            if (bottomBoundaryRefCurrent) {
+                observer.unobserve(bottomBoundaryRefCurrent);
+            }
+        };
+    }, [fetchNextDataBatch, hasMoreData, searchResults]);
 
     const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter') {
@@ -231,30 +238,35 @@ export default function Home() {
                 </button>
             </div>
             <div className="w-full max-w-4xl">
-                {hasSearched &&
-                    (searchLoading ? (
-                        <div>
+                {hasSearched && (
+                    <>
+                        {searchResults.length > 0 ? (
+                            <div
+                                className="grid grid-cols-1 gap-6 md:grid-cols-2
+                                    lg:grid-cols-3"
+                            >
+                                {searchResults.map((listing, index) => (
+                                    <Listing listing={listing} key={index} />
+                                ))}
+                                <div ref={bottomBoundaryRef}></div>
+                            </div>
+                        ) : (
+                            !searchLoading && (
+                                <p className="text-gray-600">
+                                    No listings found. Try searching for something else.
+                                </p>
+                            )
+                        )}
+                        {searchLoading && (
                             <div className="flex items-center justify-center">
                                 <div
                                     className="h-8 w-8 animate-spin rounded-full border-4
                                         border-indigo-600 border-t-transparent"
                                 ></div>
                             </div>
-                        </div>
-                    ) : searchResults.length > 0 ? (
-                        <div
-                            className="grid grid-cols-1 gap-6 md:grid-cols-2
-                                lg:grid-cols-3"
-                        >
-                            {searchResults.map((listing, index) => (
-                                <Listing listing={listing} key={index} />
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-gray-600">
-                            No listings found. Try searching for something else.
-                        </p>
-                    ))}
+                        )}
+                    </>
+                )}
             </div>
         </div>
     );
