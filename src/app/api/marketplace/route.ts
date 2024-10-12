@@ -117,19 +117,17 @@ export async function GET(req: NextRequest) {
 
     // Retrieve from cache first
     let cachedListings = await getFromCache(searchTerm);
+    const scrapingWhenRequested = scrapeManager.alreadyScraping(searchTerm);
 
     if (
-        (cachedListings.length && !scrapeManager.alreadyScraping(searchTerm)) ||
-        (scrapeManager.alreadyScraping(searchTerm) &&
-            cachedListings.length >= page * pageSize)
+        (cachedListings.length && !scrapingWhenRequested) ||
+        (scrapingWhenRequested && cachedListings.length >= page * pageSize)
     ) {
         const paginatedListings = cachedListings.slice(
             (page - 1) * pageSize,
             page * pageSize,
         );
-        const hasMore =
-            cachedListings.length > page * pageSize ||
-            scrapeManager.alreadyScraping(searchTerm);
+        const hasMore = cachedListings.length > page * pageSize || scrapingWhenRequested;
         return NextResponse.json({
             message: 'Cached search results',
             listings: paginatedListings,
