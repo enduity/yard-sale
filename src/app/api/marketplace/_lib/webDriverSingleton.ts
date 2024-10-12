@@ -1,6 +1,6 @@
 import { WebDriverProvider } from './WebDriverProvider';
 
 // Initialize the singleton instance
-const webdriverProvider = new WebDriverProvider();
+const webDriverProvider = new WebDriverProvider();
 
-export default webdriverProvider;
+export { webDriverProvider };

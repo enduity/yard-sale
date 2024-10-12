@@ -5,10 +5,10 @@ import { Navigator } from './Navigator';
 import { PopupHandler } from './PopupHandler';
 import { ListingExtractor } from './ListingExtractor';
 import { ScrollManager } from './ScrollManager';
-import { DriverManager } from './DriverManager';
+import { webDriverProvider } from './webDriverSingleton';
 
 export class FacebookMarketplaceScraper {
-    private driverManager = new DriverManager();
+    private driverProvider = webDriverProvider;
     private driver: WebDriver | null = null;
     private processedListings = new Set<string>();
 
@@ -18,7 +18,7 @@ export class FacebookMarketplaceScraper {
     private scrollManager: ScrollManager | null = null;
 
     async init(): Promise<void> {
-        this.driver = await this.driverManager.initDriver();
+        this.driver = await this.driverProvider.driver;
         await this.driver.manage().deleteAllCookies();
         const currentHandle = await this.driver.getWindowHandle();
         for (const handle of await this.driver.getAllWindowHandles()) {
@@ -37,7 +37,7 @@ export class FacebookMarketplaceScraper {
     }
 
     async close(): Promise<void> {
-        await this.driverManager.closeDriver();
+        await this.driverProvider.releaseDriver();
         this.driver = null;
         this.navigator = null;
         this.popupHandler = null;
