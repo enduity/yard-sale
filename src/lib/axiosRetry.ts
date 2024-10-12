@@ -3,7 +3,7 @@ import { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 export function axiosRetry(
     axiosInstance: AxiosInstance,
     retries: number = 3,
-    baseDelay: number = 200
+    baseDelay: number = 200,
 ) {
     axiosInstance.interceptors.response.use(
         (response) => response,
@@ -16,11 +16,11 @@ export function axiosRetry(
 
                 const delay = Math.min(
                     baseDelay * 2 ** (config.retryCount - 1) + Math.random() * 100,
-                    30000
+                    30000,
                 );
 
                 console.log(
-                    `Retrying request... Attempt #${config.retryCount} in ${delay}ms`
+                    `Retrying request... Attempt #${config.retryCount} in ${delay}ms`,
                 );
 
                 await new Promise((resolve) => setTimeout(resolve, delay));
@@ -29,6 +29,6 @@ export function axiosRetry(
             }
 
             return Promise.reject(error);
-        }
+        },
     );
 }

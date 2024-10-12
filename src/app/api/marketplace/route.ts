@@ -101,7 +101,7 @@ async function getFromCache(searchTerm: string): Promise<Listing[]> {
 export async function GET(req: NextRequest) {
     const accessErrorResponse = NextResponse.json(
         { error: 'Unable to access Facebook Marketplace. Try again later.' },
-        { status: 500 }
+        { status: 500 },
     );
 
     const url = new URL(req.url);
@@ -125,7 +125,7 @@ export async function GET(req: NextRequest) {
     ) {
         const paginatedListings = cachedListings.slice(
             (page - 1) * pageSize,
-            page * pageSize
+            page * pageSize,
         );
         const hasMore =
             cachedListings.length > page * pageSize ||
@@ -148,7 +148,7 @@ export async function GET(req: NextRequest) {
                 headers: {
                     'Retry-After': '0.4',
                 },
-            }
+            },
         );
     }
 
@@ -203,7 +203,7 @@ export async function GET(req: NextRequest) {
     // Paginate the collected data
     const paginatedListings = cachedListings.slice(
         (page - 1) * pageSize,
-        page * pageSize
+        page * pageSize,
     );
     const hasMore =
         cachedListings.length > page * pageSize ||

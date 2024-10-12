@@ -4,7 +4,7 @@ export function getSuggestions(
     dictionary: string[],
     search: string,
     maxSuggestions: number = 5,
-    maxDistance: number = 3
+    maxDistance: number = 3,
 ): string[] {
     if (!search) return [];
     const searchTermNormalized = search.toLowerCase().replace(/\s+/g, '');
@@ -27,7 +27,7 @@ export function getSuggestions(
                 ) {
                     const distance = levenshteinDistance(
                         normalized.slice(i, i + searchTermNormalized.length),
-                        searchTermNormalized
+                        searchTermNormalized,
                     );
                     minDistance = Math.min(minDistance, distance);
                 }

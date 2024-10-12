@@ -78,7 +78,7 @@ export class FacebookMarketplaceScraper {
                 this.processListings.bind(this),
                 this.listingExtractor!.getListingElements.bind(this.listingExtractor),
                 this.popupHandler!.checkSeeMorePopup.bind(this.popupHandler),
-                this.waitForNewContent.bind(this)
+                this.waitForNewContent.bind(this),
             );
 
             for await (const listingData of listingGenerator!) {

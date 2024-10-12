@@ -1,4 +1,4 @@
-import { WebDriver, By, until, Key } from 'selenium-webdriver';
+import { By, Key, until, WebDriver } from 'selenium-webdriver';
 import { NoSuchElementError } from 'selenium-webdriver/lib/error';
 
 export class Navigator {
@@ -19,10 +19,10 @@ export class Navigator {
             const cookiesButton = await this.driver.wait(
                 until.elementLocated(
                     By.xpath(
-                        '//div[@aria-label="Allow all cookies" and @role="button" and not(@aria-disabled="true")]'
-                    )
+                        '//div[@aria-label="Allow all cookies" and @role="button" and not(@aria-disabled="true")]',
+                    ),
                 ),
-                10000
+                10000,
             );
             await cookiesButton.click();
         } catch (error) {
@@ -34,7 +34,7 @@ export class Navigator {
     public async checkIfCorrectLocation(location: string): Promise<boolean> {
         try {
             await this.driver.findElement(
-                By.xpath(`//div[@role="button" and contains(., ${location})]`)
+                By.xpath(`//div[@role="button" and contains(., ${location})]`),
             );
             return true;
         } catch (error) {
@@ -50,16 +50,16 @@ export class Navigator {
             const locationButton = await this.driver.wait(
                 until.elementLocated(
                     By.xpath(
-                        '//div[@role="button" and contains(., "San Francisco, California")]'
-                    )
+                        '//div[@role="button" and contains(., "San Francisco, California")]',
+                    ),
                 ),
-                10000
+                10000,
             );
             await locationButton.click();
 
             const locationInput = await this.driver.wait(
                 until.elementLocated(By.xpath('//label[@aria-label="Location"]//input')),
-                10000
+                10000,
             );
             await locationInput.clear();
             await locationInput.sendKeys(Key.chord(Key.CONTROL, 'a'), Key.BACK_SPACE);
@@ -67,33 +67,33 @@ export class Navigator {
 
             const locationOption = await this.driver.wait(
                 until.elementLocated(
-                    By.xpath(`//div[@role="option" and contains(., "${locationName}")]`)
+                    By.xpath(`//div[@role="option" and contains(., "${locationName}")]`),
                 ),
-                10000
+                10000,
             );
             await locationOption.click();
 
             const radiusButton = await this.driver.wait(
                 until.elementLocated(
-                    By.xpath('//label[@role="combobox" and @aria-label="Radius"]')
+                    By.xpath('//label[@role="combobox" and @aria-label="Radius"]'),
                 ),
-                10000
+                10000,
             );
             await radiusButton.click();
 
             const radiusOption = await this.driver.wait(
                 until.elementLocated(
-                    By.xpath(`//div[@role="option" and contains(., "${radius}")]`)
+                    By.xpath(`//div[@role="option" and contains(., "${radius}")]`),
                 ),
-                10000
+                10000,
             );
             await radiusOption.click();
 
             const applyButton = await this.driver.wait(
                 until.elementLocated(
-                    By.xpath('//div[@role="button" and contains(., "Apply")]')
+                    By.xpath('//div[@role="button" and contains(., "Apply")]'),
                 ),
-                10000
+                10000,
             );
             await applyButton.click();
 
@@ -110,11 +110,11 @@ export class Navigator {
                 until.elementIsVisible(
                     this.driver.findElement(
                         By.xpath(
-                            '//input[@aria-label="Search Marketplace" and @type="search"]'
-                        )
-                    )
+                            '//input[@aria-label="Search Marketplace" and @type="search"]',
+                        ),
+                    ),
                 ),
-                10000
+                10000,
             );
             await searchInput.clear();
             await searchInput.sendKeys(searchTerm, Key.RETURN);
@@ -128,16 +128,16 @@ export class Navigator {
 
     private async waitForListingLoad(): Promise<void> {
         const listingContainer = await this.driver.findElement(
-            By.xpath('//div[contains(@style, "max-width")]/div[@class]')
+            By.xpath('//div[contains(@style, "max-width")]/div[@class]'),
         );
 
         await this.driver.wait(until.stalenessOf(listingContainer), 10000);
 
         await this.driver.wait(
             until.elementLocated(
-                By.xpath('//div[contains(@style, "max-width")]/div[@class]')
+                By.xpath('//div[contains(@style, "max-width")]/div[@class]'),
             ),
-            10000
+            10000,
         );
     }
 }

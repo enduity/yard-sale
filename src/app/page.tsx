@@ -45,7 +45,7 @@ export default function Home() {
             setSearchLoading(false);
             return true;
         },
-        []
+        [],
     );
 
     const handleSearchExecuted = useCallback(
@@ -59,7 +59,7 @@ export default function Home() {
                 console.log('Received continue');
             }
         },
-        [handleNewResults]
+        [handleNewResults],
     );
 
     const handleSearch = useCallback(async () => {
@@ -108,13 +108,13 @@ export default function Home() {
         }
         if (event.key === 'ArrowDown') {
             setHighlightedIndex((prevIndex) =>
-                Math.min(prevIndex + 1, searchSuggestions.length - 1)
+                Math.min(prevIndex + 1, searchSuggestions.length - 1),
             );
         } else if (event.key === 'ArrowUp') {
             setHighlightedIndex((prevIndex) => Math.max(prevIndex - 1, 0));
         } else if (event.key === 'Tab' && showDropdown) {
             setHighlightedIndex(
-                (prevIndex) => (prevIndex + 1) % searchSuggestions.length
+                (prevIndex) => (prevIndex + 1) % searchSuggestions.length,
             );
         } else {
             // Do not prevent default action if not one of the above keys
@@ -166,7 +166,7 @@ export default function Home() {
                                     shadow-sm focus:border-0 focus:outline-none`,
                                     showDropdown &&
                                         searchSuggestions.length > 0 &&
-                                        'rounded-b-none border-0 border-b'
+                                        'rounded-b-none border-0 border-b',
                                 )}
                             />
                             <div
@@ -177,7 +177,7 @@ export default function Home() {
                                     font-semibold transition-opacity duration-150`,
                                     showHistoryCleared && 'opacity-100 duration-150',
                                     !showHistoryCleared &&
-                                        'opacity-0 delay-[2s] duration-1000'
+                                        'opacity-0 delay-[2s] duration-1000',
                                 )}
                                 onTransitionEnd={() =>
                                     showHistoryCleared && setShowHistoryCleared(false)

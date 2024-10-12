@@ -2,12 +2,12 @@
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'url';
-import path from "node:path";
+import path from 'node:path';
 
 const getDirname = () => {
     const __filename = fileURLToPath(import.meta.url);
     return path.dirname(__filename);
-}
+};
 
 const nextConfig = {
     webpack: (config, { isServer }) => {
@@ -15,7 +15,7 @@ const nextConfig = {
             const require = createRequire(import.meta.url);
             // Dynamically find the path to the selenium-webdriver package
             const seleniumWebdriverPath = path.dirname(
-                require.resolve('selenium-webdriver')
+                require.resolve('selenium-webdriver'),
             );
 
             // Construct the path to selenium-manager.exe within the package
@@ -23,7 +23,7 @@ const nextConfig = {
                 seleniumWebdriverPath,
                 'bin',
                 process.platform === 'win32' ? 'windows' : process.platform,
-                'selenium-manager' + (process.platform === 'win32' ? '.exe' : '')
+                'selenium-manager' + (process.platform === 'win32' ? '.exe' : ''),
             );
 
             // Define the destination path where Selenium expects the executable
@@ -31,7 +31,7 @@ const nextConfig = {
                 getDirname(),
                 '.next/server/bin',
                 process.platform === 'win32' ? 'windows' : process.platform,
-                'selenium-manager' + (process.platform === 'win32' ? '.exe' : '')
+                'selenium-manager' + (process.platform === 'win32' ? '.exe' : ''),
             );
 
             // Add the CopyWebpackPlugin to copy the executable
@@ -43,7 +43,7 @@ const nextConfig = {
                             to: destinationPath,
                         },
                     ],
-                })
+                }),
             );
         }
         return config;
