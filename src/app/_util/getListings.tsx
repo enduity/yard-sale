@@ -29,7 +29,7 @@ export async function* getListings(searchTerm: string): AsyncGenerator<ListingMo
         try {
             const response = await axiosInstance.get(`/marketplace`, {
                 params: {
-                    searchTerm: encodeURIComponent(searchTerm),
+                    searchTerm: searchTerm,
                     ...(page !== null && { page: page }),
                 },
                 timeout: 20000,
@@ -47,6 +47,14 @@ export async function* getListings(searchTerm: string): AsyncGenerator<ListingMo
                     return {
                         status: SearchStatus.Wait,
                         waitTime: waitTime,
+                    };
+                }
+                if (error.response?.status === 404) {
+                    return {
+                        status: SearchStatus.Success,
+                        listings: [],
+                        hasMore: false,
+                        message: '',
                     };
                 }
 

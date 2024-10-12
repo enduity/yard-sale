@@ -44,26 +44,38 @@ function urlGenerator(options: MarketPlaceOptions): string {
         availability,
         daysSinceListed,
     } = options;
-    const url = new URL(`https://www.facebook.com/marketplace/${location}/search`);
-    url.searchParams.append('query', query);
-    if (radius) url.searchParams.append('radius', String(radius));
-    if (minPrice) url.searchParams.append('min_price', String(minPrice));
-    if (maxPrice) url.searchParams.append('max_price', String(maxPrice));
+
+    const baseUrl = `https://www.facebook.com/marketplace/${location}/search`;
+    const params: { [key: string]: string } = {};
+
+    params['query'] = query;
+    if (radius) params['radius'] = String(radius);
+    if (minPrice) params['min_price'] = String(minPrice);
+    if (maxPrice) params['max_price'] = String(maxPrice);
     if (sortBy) {
-        url.searchParams.append('sort_by', sortBy.key);
-        url.searchParams.append('sort_order', sortBy.order);
+        params['sort_by'] = sortBy.key;
+        params['sort_order'] = sortBy.order;
     }
-    if (itemCondition) url.searchParams.append('item_condition', itemCondition.join(','));
-    if (availability) url.searchParams.append('availability', availability);
-    if (daysSinceListed)
-        url.searchParams.append('days_since_listed', String(daysSinceListed));
-    return url.toString();
+    if (itemCondition) params['item_condition'] = itemCondition.join(',');
+    if (availability) params['availability'] = availability;
+    if (daysSinceListed) params['days_since_listed'] = String(daysSinceListed);
+
+    const queryString = Object.keys(params)
+        .map((key) => {
+            const encodedKey = encodeURIComponent(key);
+            const encodedValue = encodeURIComponent(params[key]).replace(/%20/g, '+');
+            return `${encodedKey}=${encodedValue}`;
+        })
+        .join('&');
+
+    return `${baseUrl}?${queryString}`;
 }
 
 export async function fetchFirstListings(
     options: MarketPlaceOptions,
 ): Promise<ListingData[]> {
     const url = urlGenerator(options);
+    console.log('Fetching listings from:', url);
 
     const response = await axiosInstance.get(url, {
         headers: {
@@ -80,6 +92,7 @@ export async function fetchFirstListings(
         'script[type="application/json"]',
     );
 
+    let listingDetails: ListingData[] = [];
     for (const scriptTag of scriptTags) {
         let jsonContent: JsonContentType | null = null;
         let detectorValue: string | undefined;
@@ -101,8 +114,18 @@ export async function fetchFirstListings(
             jsonContent !== null &&
             detectorValue.includes('SearchContentContainerQueryRelayPreloader')
         ) {
-            return extractListingDetails(jsonContent);
+            const tagListingDetails: ListingData[] = extractListingDetails(jsonContent);
+            listingDetails = [...listingDetails, ...tagListingDetails];
+            listingDetails = listingDetails.reduce<ListingData[]>((acc, listing) => {
+                if (!acc.some((accListing) => accListing.url === listing.url)) {
+                    return [...acc, listing];
+                }
+                return acc;
+            }, []);
         }
+    }
+    if (listingDetails.length > 0) {
+        return listingDetails;
     }
 
     console.warn('Failed to extract any listings');

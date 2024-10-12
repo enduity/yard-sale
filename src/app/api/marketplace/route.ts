@@ -119,15 +119,15 @@ export async function GET(req: NextRequest) {
     let cachedListings = await getFromCache(searchTerm);
     const scrapingWhenRequested = scrapeManager.alreadyScraping(searchTerm);
 
-    if (
-        (cachedListings.length && !scrapingWhenRequested) ||
-        (scrapingWhenRequested && cachedListings.length >= page * pageSize)
-    ) {
+    if (cachedListings.length && !scrapingWhenRequested) {
         const paginatedListings = cachedListings.slice(
             (page - 1) * pageSize,
             page * pageSize,
         );
-        const hasMore = cachedListings.length > page * pageSize || scrapingWhenRequested;
+        if (!paginatedListings.length) {
+            return NextResponse.json({ error: 'No listings found' }, { status: 404 });
+        }
+        const hasMore = cachedListings.length > page * pageSize;
         return NextResponse.json({
             message: 'Cached search results',
             listings: paginatedListings,
@@ -135,8 +135,17 @@ export async function GET(req: NextRequest) {
         });
     }
 
-    // Check if already scraping, this means enough data just isn't available yet
-    if (scrapeManager.alreadyScraping(searchTerm)) {
+    if (scrapingWhenRequested && cachedListings.length >= page * pageSize) {
+        const paginatedListings = cachedListings.slice(
+            (page - 1) * pageSize,
+            page * pageSize,
+        );
+        return NextResponse.json({
+            message: 'Cached search results',
+            listings: paginatedListings,
+            hasMore: true,
+        });
+    } else if (scrapingWhenRequested) {
         return NextResponse.json(
             {
                 message: 'This page is currently processing, please try again later.',
@@ -163,6 +172,10 @@ export async function GET(req: NextRequest) {
     } catch (error) {
         console.error('Error fetching first listings:', error);
         return accessErrorResponse;
+    }
+
+    if (!firstListings.length) {
+        return NextResponse.json({ error: 'No listings found' }, { status: 404 });
     }
 
     // Cache the first listings
