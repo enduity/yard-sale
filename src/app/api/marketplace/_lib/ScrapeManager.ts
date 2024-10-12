@@ -8,7 +8,7 @@ export interface Scrape {
  * without hasMore set to true.
  */
 class ScrapeManager {
-    private static instance: ScrapeManager;
+    private static instance: ScrapeManager | null = null;
     private ongoingScrapes: Map<string, Scrape>;
 
     private constructor() {
@@ -17,7 +17,7 @@ class ScrapeManager {
 
     // Singleton access method
     public static getInstance(): ScrapeManager {
-        if (!ScrapeManager.instance) {
+        if (ScrapeManager.instance === null) {
             ScrapeManager.instance = new ScrapeManager();
         }
         return ScrapeManager.instance;
