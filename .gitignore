@@ -37,3 +37,6 @@ next-env.d.ts
 
 # local database
 dev.db*
+
+# vcs.xml from IDE
+.idea/vcs.xml
