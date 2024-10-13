@@ -1,106 +1,50 @@
-import { Listing as ListingModel } from '@/types';
-import { axiosInstance } from '@/lib/axiosInstance';
-import axios from 'axios';
+import { Listing as ListingModel } from '@/types/listings';
 
+// Fix for TypeScript not understanding the polyfill below
+declare global {
+    interface ReadableStream<R> {
+        [Symbol.asyncIterator](): AsyncIterableIterator<R>;
+    }
+}
+
+/**
+ * Polyfill to make ReadableStream iterable with for-await-of
+ */
+ReadableStream.prototype[Symbol.asyncIterator] = async function* () {
+    const reader = this.getReader();
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) return;
+            yield value;
+        }
+    } finally {
+        reader.releaseLock();
+    }
+};
+
+/**
+ * Get listings from the marketplace, given a search term.
+ *
+ * @param searchTerm
+ * @returns A generator of listings
+ */
 export async function* getListings(searchTerm: string): AsyncGenerator<ListingModel[]> {
-    enum SearchStatus {
-        Success = 'success',
-        Wait = 'wait',
-        Fail = 'fail',
+    const response = await fetch(`/api/v1/listings?query=${searchTerm}&location=Eesti`);
+
+    const readableStream: ReadableStream<Uint8Array> | null = response.body;
+    if (!readableStream) {
+        throw new Error('Failed to get listings');
     }
 
-    type SearchResponse =
-        | {
-              listings: ListingModel[];
-              hasMore: boolean;
-              message: string;
-              status: SearchStatus.Success;
-          }
-        | {
-              status: SearchStatus.Wait;
-              waitTime: number;
-          }
-        | {
-              status: SearchStatus.Fail;
-              message: string;
-          };
-
-    const doRequest = async (page: number | null = null): Promise<SearchResponse> => {
-        try {
-            const response = await axiosInstance.get(`/marketplace`, {
-                params: {
-                    searchTerm: searchTerm,
-                    ...(page !== null && { page: page }),
-                },
-                timeout: 20000,
-            });
-
-            return {
-                status: SearchStatus.Success,
-                ...response.data,
-            };
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                if (error.response?.status === 503) {
-                    const waitTime =
-                        parseFloat(error.response.headers['retry-after'] ?? '0.4') * 1000;
-                    return {
-                        status: SearchStatus.Wait,
-                        waitTime: waitTime,
-                    };
-                }
-                if (error.response?.status === 404) {
-                    return {
-                        status: SearchStatus.Success,
-                        listings: [],
-                        hasMore: false,
-                        message: '',
-                    };
-                }
-
-                const errorMessage = error.response?.data?.message || error.message;
-                return { status: SearchStatus.Fail, message: errorMessage };
-            }
-
-            let errorMessage: string;
-            if (error instanceof Error) {
-                errorMessage = error.message;
-            } else {
-                errorMessage = 'Unknown error';
-            }
-            return { status: SearchStatus.Fail, message: errorMessage };
-        }
-    };
-
-    const firstData = await doRequest();
-
-    if (firstData.status !== SearchStatus.Success) {
-        const errorMessage =
-            firstData.status === SearchStatus.Fail
-                ? firstData.message
-                : 'API sent 503 too early';
-        throw new Error(`Request failed: ${errorMessage}`);
-    }
-    console.log('Yielding first data');
-    yield firstData.listings;
-    let hasMore = firstData['hasMore'];
-    let page = 2;
-    while (hasMore) {
-        console.log('Requesting more..');
-        const data = await doRequest(page);
-        console.log('Request complete');
-        if (data.status === SearchStatus.Wait) {
-            console.log('Waiting...');
-            await new Promise((resolve) => setTimeout(resolve, data.waitTime));
-            continue;
-        }
-        if (data.status === SearchStatus.Fail) {
-            console.error('Failed request');
-            throw new Error(`Request failed: ${data.message}`);
-        }
-        console.log('Yielding more');
-        yield data.listings;
-        hasMore = data.hasMore;
-        page += 1;
+    for await (const listingData of readableStream) {
+        const decodedData = new TextDecoder().decode(listingData);
+        console.log(decodedData);
+        const jsonStrings = decodedData
+            .split(/}(?={)/)
+            .map((str, index, arr) => str + (index < arr.length - 1 ? '}' : ''));
+        console.log(jsonStrings);
+        const listings = jsonStrings.map((str) => JSON.parse(str));
+        yield listings;
     }
 }

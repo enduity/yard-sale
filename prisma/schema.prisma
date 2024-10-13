@@ -27,18 +27,19 @@ model Thumbnail {
 }
 
 model Search {
-  id           Int           @id @default(autoincrement())
-  query        String
-  results      Listing[]     @relation("SearchListings")
-  time         DateTime      @default(now())
-  QueueProcess QueueProcess?
+  id            Int           @id @default(autoincrement())
+  query         String
+  results       Listing[]     @relation("SearchListings")
+  time          DateTime      @default(now())
+  QueueProcess  QueueProcess?
+  maxDaysListed Int?
 }
 
 model QueueProcess {
-  id       Int       @id @default(autoincrement())
-  Search   Search    @relation(fields: [searchId], references: [id], onDelete: Cascade)
-  searchId Int       @unique
-  status   String
-  started  DateTime  @default(now())
-  ended    DateTime?
+  id          Int       @id @default(autoincrement())
+  Search      Search    @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  searchId    Int       @unique
+  status      String
+  started     DateTime  @default(now())
+  ended       DateTime?
 }

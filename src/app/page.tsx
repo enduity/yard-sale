@@ -1,7 +1,7 @@
 'use client';
 
 import { KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { Listing as ListingModel } from '@/types';
+import { Listing as ListingModel } from '@/types/listings';
 import { clsx } from 'clsx';
 import { getSuggestions } from '@/app/_util/getSuggestions';
 import { Listing } from '@/app/_components/Listing';
@@ -22,9 +22,6 @@ export default function Home() {
     const dataGeneratorRef = useRef<AsyncGenerator<ListingModel[], void, unknown> | null>(
         null,
     );
-    const isFetchingRef = useRef<boolean>(false);
-    const [hasMoreData, setHasMoreData] = useState<boolean>(true);
-    const bottomBoundaryRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         const storedSearches = localStorage.getItem('previousSearches');
@@ -33,38 +30,31 @@ export default function Home() {
         }
     }, []);
 
-    const fetchNextDataBatch = useCallback(async () => {
-        if (dataGeneratorRef.current && !isFetchingRef.current) {
-            isFetchingRef.current = true;
+    const processDataGenerator = useCallback(async (currentSearchTerm: string) => {
+        if (dataGeneratorRef.current) {
             try {
-                const { value: data, done } = await dataGeneratorRef.current.next();
-                if (data && executedSearchTerm.current === searchTerm) {
-                    console.log('Fetched data:', data);
-                    const newSearchResults = searchResultsRef.current.concat(data);
-                    setSearchResults(newSearchResults);
-                    searchResultsRef.current = newSearchResults;
+                for await (const data of dataGeneratorRef.current) {
+                    if (executedSearchTerm.current === currentSearchTerm) {
+                        console.log('Fetched data:', data);
+                        const newSearchResults = searchResultsRef.current.concat(data);
+                        setSearchResults(newSearchResults);
+                        searchResultsRef.current = newSearchResults;
+                    }
                 }
-                if (done) {
-                    console.log('No more data to fetch');
-                    setHasMoreData(false);
-                    setSearchLoading(false);
-                }
+                console.log('No more data to fetch');
+                setSearchLoading(false);
             } catch (error) {
                 console.error('Error fetching data:', error);
-                setHasMoreData(false);
                 setSearchLoading(false);
-            } finally {
-                isFetchingRef.current = false;
             }
         }
-    }, [searchTerm]);
+    }, []);
 
     const handleSearch = useCallback(async () => {
         console.log('Handling search...');
         setSearchResults([]);
         searchResultsRef.current = [];
         setHasSearched(true);
-        setHasMoreData(true);
         setSearchLoading(true);
         executedSearchTerm.current = searchTerm;
         dataGeneratorRef.current = getListings(searchTerm);
@@ -77,31 +67,8 @@ export default function Home() {
 
         localStorage.setItem('previousSearches', JSON.stringify(updatedSearches));
 
-        void fetchNextDataBatch();
-    }, [searchTerm, previousSearches, fetchNextDataBatch]);
-
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                const firstEntry = entries[0];
-                if (firstEntry.isIntersecting && hasMoreData) {
-                    void fetchNextDataBatch();
-                }
-            },
-            { threshold: 1 },
-        );
-
-        const bottomBoundaryRefCurrent = bottomBoundaryRef.current;
-        if (bottomBoundaryRefCurrent) {
-            observer.observe(bottomBoundaryRefCurrent);
-        }
-
-        return () => {
-            if (bottomBoundaryRefCurrent) {
-                observer.unobserve(bottomBoundaryRefCurrent);
-            }
-        };
-    }, [fetchNextDataBatch, hasMoreData, searchResults]);
+        void processDataGenerator(searchTerm);
+    }, [searchTerm, previousSearches, processDataGenerator]);
 
     const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter') {
@@ -242,13 +209,12 @@ export default function Home() {
                     <>
                         {searchResults.length > 0 ? (
                             <div
-                                className="grid grid-cols-1 gap-6 md:grid-cols-2
+                                className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2
                                     lg:grid-cols-3"
                             >
                                 {searchResults.map((listing, index) => (
                                     <Listing listing={listing} key={index} />
                                 ))}
-                                <div ref={bottomBoundaryRef}></div>
                             </div>
                         ) : (
                             !searchLoading && (
