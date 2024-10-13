@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export interface JsonContentType {
+export interface PreloadJsonContent {
     require: [
         [
             string,
@@ -19,7 +19,7 @@ export interface JsonContentType {
                                         __bbox: {
                                             complete: boolean;
                                             result: {
-                                                data: Data;
+                                                data: SearchData;
                                             };
                                         };
                                     },
@@ -33,7 +33,69 @@ export interface JsonContentType {
     ];
 }
 
-interface Data {
+export interface SingleItemJsonContent {
+    require: [
+        [
+            string,
+            string,
+            null,
+            [
+                {
+                    __bbox: {
+                        require: [
+                            any[],
+                            any[],
+                            any[],
+                            [
+                                string,
+                                string,
+                                any[],
+                                [
+                                    string,
+                                    {
+                                        __bbox: {
+                                            complete: boolean;
+                                            result: {
+                                                data: SingleItemData;
+                                            };
+                                        };
+                                    },
+                                ],
+                            ],
+                        ];
+                    };
+                },
+            ],
+        ],
+    ];
+}
+
+interface SingleItemData {
+    viewer: {
+        marketplace_product_details_page: {
+            marketplace_listing_renderable_target: MarketplaceListingRenderableTarget;
+            target: JsonListing;
+        };
+    };
+}
+
+export interface CatalogLoadJsonContent {
+    data: SearchData;
+}
+
+interface MarketplaceListingRenderableTarget {
+    location: {
+        latitude: number;
+        longitude: number;
+    };
+    is_shipping_offered: boolean;
+    sweepstake_enabled: boolean;
+    id: string;
+    base_marketplace_listing_title: string;
+    marketplace_listing_title: string;
+}
+
+interface SearchData {
     marketplace_search: MarketplaceSearch;
 }
 
@@ -43,24 +105,30 @@ interface MarketplaceSearch {
 
 interface FeedUnits {
     edges: Edge[];
+    page_info: PageInfo;
+}
+
+export interface PageInfo {
+    end_cursor: string;
+    has_next_page: boolean;
 }
 
 export interface Edge {
-    node: Node;
+    node: EdgeNode;
     cursor: null;
     __typename: string;
 }
 
-export interface Node {
+export interface EdgeNode {
     __typename: string;
     story_type: string;
     story_key: string;
     tracking: string;
-    listing: Listing;
+    listing: JsonListing;
     id: string;
 }
 
-interface Listing {
+export interface JsonListing {
     __typename: string;
     id: string;
     primary_listing_photo: PrimaryListingPhoto;

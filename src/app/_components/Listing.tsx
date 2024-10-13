@@ -1,4 +1,4 @@
-import { Listing as ListingModel } from '@/types';
+import { Listing as ListingModel } from '@/types/listings';
 import Image from 'next/image';
 
 export function Listing({ listing }: { listing: ListingModel }) {
@@ -9,7 +9,7 @@ export function Listing({ listing }: { listing: ListingModel }) {
                     rounded-md"
             >
                 <Image
-                    src={`/api/thumbnail?id=${listing.thumbnailId}`}
+                    src={`/api/v1/thumbnails?id=${listing.thumbnailId}`}
                     alt={listing.title}
                     className="object-cover"
                     fill={true}
