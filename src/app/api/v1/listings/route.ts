@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { ApiResponse } from '@/app/api/v1/_util/ApiResponse';
 import { MarketplaceScraper } from '@/app/api/v1/listings/_marketplace/MarketplaceScraper';
 import { MarketplaceLocation } from '@/types/marketplace';
@@ -7,6 +7,7 @@ import { DatabaseManager } from '@/app/api/v1/listings/_database/DatabaseManager
 import { QueueManager } from '@/app/api/v1/listings/_database/QueueManager';
 import { marketplaceGenerator } from '@/app/api/v1/listings/_marketplace/marketplaceGenerator';
 import { generatorToStream } from '@/app/api/v1/_util/generatorToStream';
+import { OkidokiScraper } from '@/app/api/v1/listings/_okidoki/OkidokiScraper';
 
 export async function GET(req: NextRequest) {
     // Process the request URL
@@ -37,16 +38,20 @@ export async function GET(req: NextRequest) {
         params.query,
         params.maxDaysListed,
     );
-    if (cachedListings !== null && !(alreadyExists?.status === 'processing')) {
-        return new ReadableStream({
-            async pull(controller) {
-                for (const listing of cachedListings) {
-                    const listingData = new TextEncoder().encode(JSON.stringify(listing));
-                    controller.enqueue(listingData);
-                }
-                controller.close();
-            },
-        });
+    if (cachedListings?.length && !(alreadyExists?.status === 'processing')) {
+        return new Response(
+            new ReadableStream({
+                async pull(controller) {
+                    for (const listing of cachedListings) {
+                        const listingData = new TextEncoder().encode(
+                            JSON.stringify(listing),
+                        );
+                        controller.enqueue(listingData);
+                    }
+                    controller.close();
+                },
+            }),
+        );
     }
 
     const processId = await QueueManager.addToQueue(params.query, params.maxDaysListed);
@@ -58,12 +63,20 @@ export async function GET(req: NextRequest) {
     };
     const marketplaceScraper = new MarketplaceScraper(options);
 
-    const generator = marketplaceGenerator(
+    const marketplace = marketplaceGenerator(
         marketplaceScraper,
         processId,
         params.query,
         params.maxDaysListed,
     );
+
+    const okidokiScraper = new OkidokiScraper();
+    const okidoki = okidokiScraper.scrapeWithCache(params.query, params.maxDaysListed);
+
+    const generator = (async function* () {
+        yield* marketplace;
+        yield* okidoki;
+    })();
 
     const streamGenerator = (async function* () {
         for await (const listing of generator) {

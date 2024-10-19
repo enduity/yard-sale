@@ -43,6 +43,22 @@ export async function* marketplaceGenerator(
 
     await QueueManager.waitUntilNextInLine(processId);
 
+    // Check that there is still no cache for the search query
+    const cachedListings = await DatabaseManager.getListings(searchQuery, maxDaysListed);
+    if (
+        cachedListings !== null &&
+        !(
+            (await QueueManager.findQueueProcess(searchQuery, maxDaysListed))?.status ===
+            'processing'
+        )
+    ) {
+        for (const listing of cachedListings) {
+            yield listing;
+        }
+        await QueueManager.finishQueueProcess(processId);
+        return;
+    }
+
     let subGenerator: AsyncGenerator<Listing>;
     const existingProcess = await QueueManager.findQueueProcess(
         searchQuery,
