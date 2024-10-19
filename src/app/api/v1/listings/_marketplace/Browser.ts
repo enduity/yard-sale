@@ -150,4 +150,10 @@ export class Browser {
         const browser = await this.browser;
         await browser.close();
     }
+
+    public async close() {
+        console.warn('Puppeteer browser closing.');
+        const browser = await this.browser;
+        await browser.close();
+    }
 }

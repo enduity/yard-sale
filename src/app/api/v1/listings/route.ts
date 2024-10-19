@@ -8,7 +8,10 @@ import { QueueManager } from '@/app/api/v1/listings/_database/QueueManager';
 import { marketplaceGenerator } from '@/app/api/v1/listings/_marketplace/marketplaceGenerator';
 import { generatorToStream } from '@/app/api/v1/_util/generatorToStream';
 import { OkidokiScraper } from '@/app/api/v1/listings/_okidoki/OkidokiScraper';
+import { OstaFetcher } from '@/app/api/v1/listings/_osta/OstaFetcher';
 import { SearchCriteria } from '@/types/search';
+import { Listing } from '@/types/listings';
+import { race } from '@/app/api/v1/_util/race';
 
 export async function GET(req: NextRequest) {
     // Process the request URL
@@ -79,9 +82,11 @@ export async function GET(req: NextRequest) {
     const okidokiScraper = new OkidokiScraper();
     const okidoki = okidokiScraper.scrapeWithCache(params.query, searchCriteria);
 
+    const ostaFetcher = new OstaFetcher(params.query, searchCriteria);
+    const osta = ostaFetcher.scrapeWithCache();
+
     const generator = (async function* () {
-        yield* marketplace;
-        yield* okidoki;
+        yield* race<Listing>(marketplace, okidoki, osta);
     })();
 
     const streamGenerator = (async function* () {
