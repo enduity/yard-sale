@@ -1,7 +1,10 @@
-import initCycleTLS from 'cycletls';
+import { CycleTLSClient } from 'cycletls';
 
-export async function fetchWithCycleTLS(url: string, body: string) {
-    const cycleTLS = await initCycleTLS();
+export async function fetchWithCycleTLS(
+    cycleTLS: CycleTLSClient,
+    url: string,
+    body: string,
+) {
     const result = await cycleTLS(
         url,
         {
@@ -12,6 +15,5 @@ export async function fetchWithCycleTLS(url: string, body: string) {
         },
         'get',
     );
-    await cycleTLS.exit();
     return result;
 }
