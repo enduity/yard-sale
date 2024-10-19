@@ -1,5 +1,7 @@
 // noinspection SuspiciousTypeOfGuard
 
+import { Condition } from '@/types/search';
+
 export enum RequestLocations {
     Tallinn = 'Tallinn',
     Harjumaa = 'Harjumaa',
@@ -20,7 +22,7 @@ export type RequestOptions = {
     minPrice?: number;
     maxPrice?: number;
     sort?: RequestSort;
-    condition?: ('new' | 'used')[];
+    condition?: Condition;
     maxDaysListed?: 1 | 7 | 30;
 };
 
@@ -68,8 +70,7 @@ function getInvalidOptionNames(options: Partial<RequestOptions>): string[] {
 
     if (
         options.condition !== undefined &&
-        (!Array.isArray(options.condition) ||
-            !options.condition.every((c) => ['new', 'used'].includes(c)))
+        !Object.values(Condition).includes(options.condition)
     ) {
         invalidParams.push('condition');
     }

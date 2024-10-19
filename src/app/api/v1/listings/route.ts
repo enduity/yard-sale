@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { ApiResponse } from '@/app/api/v1/_util/ApiResponse';
 import { MarketplaceScraper } from '@/app/api/v1/listings/_marketplace/MarketplaceScraper';
 import { MarketplaceLocation } from '@/types/marketplace';
@@ -8,6 +8,7 @@ import { QueueManager } from '@/app/api/v1/listings/_database/QueueManager';
 import { marketplaceGenerator } from '@/app/api/v1/listings/_marketplace/marketplaceGenerator';
 import { generatorToStream } from '@/app/api/v1/_util/generatorToStream';
 import { OkidokiScraper } from '@/app/api/v1/listings/_okidoki/OkidokiScraper';
+import { SearchCriteria } from '@/types/search';
 
 export async function GET(req: NextRequest) {
     // Process the request URL
@@ -29,14 +30,19 @@ export async function GET(req: NextRequest) {
         return ApiResponse.invalidParameter(findFirstInvalidOption(params)!);
     }
 
+    const searchCriteria: SearchCriteria = {
+        maxDaysListed: params.maxDaysListed,
+        condition: params.condition,
+    };
+
     const cachedListings = await DatabaseManager.getListings(
         params.query,
-        params.maxDaysListed,
+        searchCriteria,
     );
 
     const alreadyExists = await QueueManager.findQueueProcess(
         params.query,
-        params.maxDaysListed,
+        searchCriteria,
     );
     if (cachedListings?.length && !(alreadyExists?.status === 'processing')) {
         return new Response(
@@ -54,7 +60,7 @@ export async function GET(req: NextRequest) {
         );
     }
 
-    const processId = await QueueManager.addToQueue(params.query, params.maxDaysListed);
+    const processId = await QueueManager.addToQueue(params.query, searchCriteria);
 
     const options = {
         query: params.query,
@@ -67,11 +73,11 @@ export async function GET(req: NextRequest) {
         marketplaceScraper,
         processId,
         params.query,
-        params.maxDaysListed,
+        searchCriteria,
     );
 
     const okidokiScraper = new OkidokiScraper();
-    const okidoki = okidokiScraper.scrapeWithCache(params.query, params.maxDaysListed);
+    const okidoki = okidokiScraper.scrapeWithCache(params.query, searchCriteria);
 
     const generator = (async function* () {
         yield* marketplace;

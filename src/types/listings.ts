@@ -8,6 +8,10 @@ export interface ListingData {
     url: string;
 }
 
+export interface ListingDataWithDate extends ListingData {
+    listedAt: Date;
+}
+
 export enum ListingSource {
     Marketplace = 'marketplace',
     Okidoki = 'okidoki',
