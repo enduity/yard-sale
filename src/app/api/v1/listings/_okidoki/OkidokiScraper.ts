@@ -1,28 +1,11 @@
 import * as cheerio from 'cheerio';
-import { Listing, ListingData, ListingSource } from '@/types/listings';
-import initCycleTLS from 'cycletls';
+import { Listing, ListingDataWithDate, ListingSource } from '@/types/listings';
 import { DatabaseManager } from '@/app/api/v1/listings/_database/DatabaseManager';
-
-type OkidokiListingData = ListingData & { listedAt: Date };
+import { fetchWithCycleTLS } from '@/app/api/v1/listings/_util/fetchWithCycleTLS';
+import { SearchCriteria } from '@/types/search';
 
 export class OkidokiScraper {
-    private async fetchWithCycleTLS(url: string, body: string) {
-        const cycleTLS = await initCycleTLS();
-        const result = await cycleTLS(
-            url,
-            {
-                body: body,
-                ja3: '771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,10-51-0-11-35-5-16-27-65281-45-23-43-17513-18-65037-13,25497-29-23-24,0',
-                userAgent:
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
-            },
-            'get',
-        );
-        void cycleTLS.exit();
-        return result;
-    }
-
-    private async *scrape(query: string): AsyncGenerator<OkidokiListingData> {
+    private async *scrape(query: string): AsyncGenerator<ListingDataWithDate> {
         let currentPage = 1;
         let hasNextPage = true;
 
@@ -33,7 +16,7 @@ export class OkidokiScraper {
             )}&p=${currentPage}`;
 
             // Fetch the page content
-            const response = await this.fetchWithCycleTLS(url, '');
+            const response = await fetchWithCycleTLS(url, '');
             const html = String(response.body);
 
             // Load the HTML content using cheerio
@@ -96,13 +79,13 @@ export class OkidokiScraper {
 
     public async *scrapeWithCache(
         query: string,
-        maxDaysListed?: number,
+        searchCriteria?: SearchCriteria,
     ): AsyncGenerator<Listing> {
         for await (const listingData of this.scrape(query)) {
             if (
-                maxDaysListed &&
+                searchCriteria?.maxDaysListed &&
                 listingData.listedAt.getTime() <
-                    Date.now() - maxDaysListed * 24 * 60 * 60 * 1000
+                    Date.now() - searchCriteria.maxDaysListed * 24 * 60 * 60 * 1000
             ) {
                 continue;
             }
@@ -110,7 +93,7 @@ export class OkidokiScraper {
                 listingData,
                 query,
                 ListingSource.Okidoki,
-                maxDaysListed,
+                searchCriteria,
             );
             yield listing;
         }

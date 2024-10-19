@@ -2,22 +2,33 @@ import { prisma } from '@/lib/prisma';
 import { axiosInstance } from '@/lib/axiosInstance';
 import { Listing, ListingData, ListingSource } from '@/types/listings';
 import { Prisma } from '@prisma/client';
+import { SearchCriteria } from '@/types/search';
 
 export class DatabaseManager {
     private static readonly STALE_SEARCH_MS = 60 * 60 * 1000;
     private static readonly BACKGROUND_TASK_BETWEEN_MS = 60 * 1000;
     private static lastBackgroundTaskTime = Date.now() - 60 * 1000;
 
-    static async addOrGetSearch(searchQuery: string, maxDaysListed?: number) {
+    static async addOrGetSearch(
+        searchQuery: string,
+        searchCriteria?: SearchCriteria,
+    ): Promise<Prisma.SearchGetPayload<{ include: { searchCriteria: true } }>> {
         const existingSearch = await prisma.search.findFirst({
-            where: {
-                query: searchQuery,
-                maxDaysListed: maxDaysListed,
-            },
+            where: { query: searchQuery, searchCriteria: searchCriteria },
+            include: { searchCriteria: true },
         });
 
         if (!existingSearch) {
-            return prisma.search.create({ data: { query: searchQuery, maxDaysListed } });
+            const createdSearch = await prisma.search.create({
+                data: { query: searchQuery },
+            });
+            const createdSearchCriteria = await prisma.searchCriteria.create({
+                data: {
+                    searchId: createdSearch.id,
+                    ...searchCriteria,
+                },
+            });
+            return { searchCriteria: createdSearchCriteria, ...createdSearch };
         }
         return existingSearch;
     }
@@ -26,12 +37,12 @@ export class DatabaseManager {
         listingData: ListingData,
         searchQuery: string,
         source: ListingSource,
-        maxDaysListed?: number,
+        searchCriteria?: SearchCriteria,
     ): Promise<Listing> {
         const imageBuffer = await this.bufferFromImageUrl(listingData.thumbnailSrc);
 
         // First, add the search term (if it doesn't exist)
-        const search = await this.addOrGetSearch(searchQuery, maxDaysListed);
+        const search = await this.addOrGetSearch(searchQuery, searchCriteria);
         // Check if the listing already exists
         const existingListing = await prisma.listing.findFirst({
             where: { url: listingData.url, searchId: search.id },
@@ -84,12 +95,12 @@ export class DatabaseManager {
 
     public static async getListings(
         searchQuery: string,
-        maxDaysListed?: number,
+        searchCriteria?: SearchCriteria,
     ): Promise<Listing[] | null> {
         const searches = await prisma.search.findMany({
             where: {
                 query: searchQuery,
-                maxDaysListed: maxDaysListed,
+                searchCriteria: searchCriteria,
             },
             include: { results: { include: { thumbnail: true } } },
         });

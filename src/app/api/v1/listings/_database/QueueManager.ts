@@ -1,18 +1,36 @@
 import { prisma } from '@/lib/prisma';
 import { ListingSource } from '@/types/listings';
-import { DatabaseManager } from '@/app/api/v1/listings/_database/DatabaseManager';
+import { SearchCriteria } from '@/types/search';
+import { Prisma } from '@prisma/client';
+
+type QueueProcessOutput = Prisma.QueueProcessGetPayload<{
+    include: {
+        Search: {
+            include: {
+                searchCriteria: true;
+            };
+        };
+    };
+}>;
 
 export class QueueManager {
     public static async addToQueue(
         searchQuery: string,
-        maxDaysListed?: number,
+        searchCriteria?: SearchCriteria,
     ): Promise<number> {
         const search = await prisma.search.create({
             data: {
                 query: searchQuery,
-                maxDaysListed,
             },
         });
+        if (searchCriteria) {
+            await prisma.searchCriteria.create({
+                data: {
+                    searchId: search.id,
+                    ...searchCriteria,
+                },
+            });
+        }
         const queueProcess = await prisma.queueProcess.create({
             data: {
                 searchId: search.id,
@@ -22,38 +40,35 @@ export class QueueManager {
         return queueProcess.id;
     }
 
-    public static async getQueueProcess(processId: number) {
+    public static async getQueueProcess(
+        processId: number,
+    ): Promise<QueueProcessOutput | null> {
         const queueProcess = await prisma.queueProcess.findFirst({
             where: { id: processId },
-            include: { Search: true },
+            include: { Search: { include: { searchCriteria: true } } },
         });
         if (!queueProcess) {
             return null;
         }
-        return {
-            searchQuery: queueProcess.Search.query,
-            maxDaysListed: queueProcess.Search.maxDaysListed,
-            status: queueProcess.status,
-        };
+        return queueProcess;
     }
 
     public static async findQueueProcess(
         searchQuery: string,
-        maxDaysListed?: number,
+        searchCriteria?: SearchCriteria,
         excludeId?: number,
-    ) {
-        const search = await prisma.search.findFirst({
+    ): Promise<QueueProcessOutput | null> {
+        const queueProcess = await prisma.queueProcess.findFirst({
             where: {
-                query: searchQuery,
-                maxDaysListed: maxDaysListed,
-                QueueProcess: { id: { not: excludeId } },
+                Search: { query: searchQuery, searchCriteria: searchCriteria },
+                id: { not: excludeId },
             },
-            include: { QueueProcess: true },
+            include: { Search: { include: { searchCriteria: true } } },
         });
-        if (!search) {
+        if (!queueProcess) {
             return null;
         }
-        return search.QueueProcess;
+        return queueProcess;
     }
 
     public static async finishQueueProcess(processId: number) {

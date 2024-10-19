@@ -2,12 +2,13 @@ import { MarketplaceScraper } from '@/app/api/v1/listings/_marketplace/Marketpla
 import { Listing, ListingData, ListingSource } from '@/types/listings';
 import { QueueManager } from '@/app/api/v1/listings/_database/QueueManager';
 import { DatabaseManager } from '@/app/api/v1/listings/_database/DatabaseManager';
+import { SearchCriteria } from '@/types/search';
 
 async function* scraperGeneratorWithCache(
     isInPreviousOutput: (listing: ListingData) => boolean,
     scraper: MarketplaceScraper,
     searchQuery: string,
-    maxDaysListed: number | undefined,
+    searchCriteria?: SearchCriteria,
 ) {
     for await (const listingData of scraper.scrape()) {
         if (isInPreviousOutput(listingData)) {
@@ -17,7 +18,7 @@ async function* scraperGeneratorWithCache(
             listingData,
             searchQuery,
             ListingSource.Marketplace,
-            maxDaysListed,
+            searchCriteria,
         );
     }
 }
@@ -26,7 +27,7 @@ export async function* marketplaceGenerator(
     scraper: MarketplaceScraper,
     processId: number,
     searchQuery: string,
-    maxDaysListed: number | undefined,
+    searchCriteria?: SearchCriteria,
 ) {
     const previousOutput: ListingData[] = [];
     for (const listingData of await scraper.fetchFirstListings()) {
@@ -35,7 +36,7 @@ export async function* marketplaceGenerator(
             listingData,
             searchQuery,
             ListingSource.Marketplace,
-            maxDaysListed,
+            searchCriteria,
         );
     }
     const isInPreviousOutput = (listing: ListingData | Listing) =>
@@ -44,11 +45,11 @@ export async function* marketplaceGenerator(
     await QueueManager.waitUntilNextInLine(processId);
 
     // Check that there is still no cache for the search query
-    const cachedListings = await DatabaseManager.getListings(searchQuery, maxDaysListed);
+    const cachedListings = await DatabaseManager.getListings(searchQuery, searchCriteria);
     if (
         cachedListings !== null &&
         !(
-            (await QueueManager.findQueueProcess(searchQuery, maxDaysListed))?.status ===
+            (await QueueManager.findQueueProcess(searchQuery, searchCriteria))?.status ===
             'processing'
         )
     ) {
@@ -62,7 +63,7 @@ export async function* marketplaceGenerator(
     let subGenerator: AsyncGenerator<Listing>;
     const existingProcess = await QueueManager.findQueueProcess(
         searchQuery,
-        maxDaysListed,
+        searchCriteria,
         processId,
     );
     if (existingProcess?.status === 'processing') {
@@ -72,7 +73,7 @@ export async function* marketplaceGenerator(
             isInPreviousOutput,
             scraper,
             searchQuery,
-            maxDaysListed,
+            searchCriteria,
         );
     }
     for await (const listing of subGenerator) {
