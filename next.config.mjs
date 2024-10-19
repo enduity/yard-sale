@@ -15,29 +15,29 @@ const nextConfig = {
             const require = createRequire(import.meta.url);
             // Dynamically find the path to the cycletls package
             const cycleTlsPath = path.dirname(require.resolve('cycletls'));
-
-            // Construct the path to index within the package
-            const cycleTlsIndexExePath = path.join(
-                cycleTlsPath,
-                'index' + (process.platform === 'win32' ? '.exe' : ''),
-            );
+            const executableFilenames = [
+                'index.exe',
+                'index-arm',
+                'index-arm64',
+                'index',
+                'index-mac',
+                'index-mac-arm64',
+                'index-freebsd',
+            ];
 
             // Define the destination path where CycleTLS expects the executable
             const destinationPath = path.resolve(
                 getDirname(),
                 '.next/server/vendor-chunks',
-                'index' + (process.platform === 'win32' ? '.exe' : ''),
             );
 
             // Add the CopyWebpackPlugin to copy the executable
             config.plugins.push(
                 new CopyWebpackPlugin({
-                    patterns: [
-                        {
-                            from: cycleTlsIndexExePath,
-                            to: destinationPath,
-                        },
-                    ],
+                    patterns: executableFilenames.map((filename) => ({
+                        from: path.join(cycleTlsPath, filename),
+                        to: path.join(destinationPath, filename),
+                    })),
                 }),
             );
         }
