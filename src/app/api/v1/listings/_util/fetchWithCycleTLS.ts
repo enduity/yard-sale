@@ -12,6 +12,6 @@ export async function fetchWithCycleTLS(url: string, body: string) {
         },
         'get',
     );
-    void cycleTLS.exit();
+    await cycleTLS.exit();
     return result;
 }
