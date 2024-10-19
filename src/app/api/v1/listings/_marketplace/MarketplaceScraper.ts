@@ -30,6 +30,10 @@ export class MarketplaceScraper {
         );
     }
 
+    public async cleanup(): Promise<void> {
+        await this.browser.close();
+    }
+
     public async fetchFirstListings(): Promise<ListingData[]> {
         const url = urlGenerator(this.options);
 

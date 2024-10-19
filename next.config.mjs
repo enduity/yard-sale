@@ -10,6 +10,9 @@ const getDirname = () => {
 };
 
 const nextConfig = {
+    experimental: {
+        instrumentationHook: true,
+    },
     webpack: (config, { isServer }) => {
         if (isServer) {
             const require = createRequire(import.meta.url);

@@ -67,6 +67,7 @@ export async function* marketplaceGenerator(
         processId,
     );
     if (existingProcess?.status === 'processing') {
+        await scraper.cleanup();
         subGenerator = QueueManager.generateFromExisting(existingProcess.id);
     } else {
         subGenerator = scraperGeneratorWithCache(
