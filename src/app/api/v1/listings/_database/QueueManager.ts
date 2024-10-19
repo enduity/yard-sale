@@ -7,7 +7,12 @@ export class QueueManager {
         searchQuery: string,
         maxDaysListed?: number,
     ): Promise<number> {
-        const search = await DatabaseManager.addOrGetSearch(searchQuery, maxDaysListed);
+        const search = await prisma.search.create({
+            data: {
+                query: searchQuery,
+                maxDaysListed,
+            },
+        });
         const queueProcess = await prisma.queueProcess.create({
             data: {
                 searchId: search.id,

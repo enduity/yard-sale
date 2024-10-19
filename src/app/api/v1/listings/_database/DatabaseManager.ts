@@ -86,7 +86,7 @@ export class DatabaseManager {
         searchQuery: string,
         maxDaysListed?: number,
     ): Promise<Listing[] | null> {
-        const search = await prisma.search.findFirst({
+        const searches = await prisma.search.findMany({
             where: {
                 query: searchQuery,
                 maxDaysListed: maxDaysListed,
@@ -94,25 +94,34 @@ export class DatabaseManager {
             include: { results: { include: { thumbnail: true } } },
         });
 
-        if (!search) {
+        if (!searches) {
             return null;
         }
 
-        if (Date.now() - search.time.getTime() > this.STALE_SEARCH_MS) {
-            await prisma.search.delete({ where: { id: search.id } });
-            return null;
+        for (const search of searches) {
+            if (Date.now() - search.time.getTime() > this.STALE_SEARCH_MS) {
+                await prisma.search.delete({ where: { id: search.id } });
+                return null;
+            }
         }
 
         void this.startBackgroundTasks();
 
-        return search.results.map((result) => ({
-            price: result.price,
-            title: result.title,
-            location: result.location,
-            thumbnailId: result.thumbnail?.id,
-            url: result.url,
-            source: result.source as ListingSource,
-        }));
+        let listings: Listing[] = [];
+        for (const search of searches) {
+            listings = [
+                ...listings,
+                ...search.results.map((result) => ({
+                    price: result.price,
+                    title: result.title,
+                    location: result.location,
+                    thumbnailId: result.thumbnail?.id,
+                    url: result.url,
+                    source: result.source as ListingSource,
+                })),
+            ];
+        }
+        return listings;
     }
 
     private static async startBackgroundTasks() {
@@ -156,6 +165,10 @@ export class DatabaseManager {
             });
             return Buffer.from(response.data);
         } catch (error) {
+            if (error instanceof TypeError) {
+                // The image URL is invalid
+                return null;
+            }
             console.error('Failed to fetch the buffer:', error);
             return null;
         }
