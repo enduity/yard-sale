@@ -1,6 +1,11 @@
+// Import necessary modules and types
 import { Browser } from '@/app/api/v1/listings/_marketplace/Browser';
-import { ListingData } from '@/types/listings';
-import { MarketplaceOptions } from '@/types/marketplace';
+import { Listing, ListingData, ListingSource } from '@/types/listings';
+import {
+    MarketplaceLocation,
+    MarketplaceOptions,
+    MarketplaceScraperOptions,
+} from '@/types/marketplace';
 import { urlGenerator } from '@/app/api/v1/listings/_marketplace/urlGenerator';
 import { axiosInstance } from '@/lib/axiosInstance';
 import { JSDOM } from 'jsdom';
@@ -8,23 +13,73 @@ import {
     JsonProcessor,
     JsonType,
 } from '@/app/api/v1/listings/_marketplace/JsonProcessor';
-import { HTTPRequest, Page } from 'puppeteer';
+import { HTTPRequest, Page, TimeoutError } from 'puppeteer';
 import { ScrollManager } from '@/app/api/v1/listings/_marketplace/ScrollManager';
 import { PopupHandler } from '@/app/api/v1/listings/_marketplace/PopupHandler';
-import { TimeoutError } from 'puppeteer';
+import { DatabaseManager } from '@/app/api/v1/listings/_database/DatabaseManager';
+import { QueueManager } from '@/app/api/v1/listings/_database/QueueManager';
+import { SearchCriteria } from '@/types/search';
 
 export class MarketplaceScraper {
     private browser: Browser;
-    private readonly options: MarketplaceOptions;
+    private readonly query: string;
+    private readonly searchCriteria?: SearchCriteria;
+    private processId?: number;
+    private readonly options: MarketplaceScraperOptions;
+    private readonly requestOptions: MarketplaceOptions;
 
-    constructor(options: MarketplaceOptions) {
+    private constructor(
+        query: string,
+        searchCriteria?: SearchCriteria,
+        options?: MarketplaceScraperOptions,
+    ) {
+        this.query = query;
+        this.searchCriteria = searchCriteria;
+        if (!options) {
+            this.options = {
+                location: MarketplaceLocation.Paide,
+                radius: 200,
+            };
+        } else {
+            this.options = options;
+        }
+        this.requestOptions = this.getConfiguration();
+
         this.browser = new Browser();
-        this.options = options;
     }
 
-    public async *scrape(): AsyncGenerator<ListingData> {
+    public static async init(
+        query: string,
+        searchCriteria?: SearchCriteria,
+        options?: MarketplaceScraperOptions,
+    ): Promise<MarketplaceScraper> {
+        const scraper = new MarketplaceScraper(query, searchCriteria, options);
+        scraper.processId = await QueueManager.addToQueue(query, searchCriteria);
+        return scraper;
+    }
+
+    private getConfiguration(): MarketplaceOptions {
+        const options: MarketplaceOptions = {
+            query: this.query,
+            location: this.options.location,
+            radius: this.options.radius,
+        };
+        if (this.searchCriteria?.maxDaysListed) {
+            // Temporary until type is fixed:
+            // Find the closest value to the maxDaysListed in the array
+            options.daysSinceListed = [1, 7, 30].reduce((acc, curr) =>
+                Math.abs(curr - this.searchCriteria!.maxDaysListed!) <
+                Math.abs(acc - this.searchCriteria!.maxDaysListed!)
+                    ? curr
+                    : acc,
+            ) as 1 | 7 | 30;
+        }
+        return options;
+    }
+
+    private async *scrape(): AsyncGenerator<ListingData> {
         yield* this.browser.usePage<ListingData>(
-            urlGenerator(this.options),
+            urlGenerator(this.requestOptions),
             { waitUntil: 'networkidle0' },
             this.handlePage.bind(this),
         );
@@ -34,8 +89,8 @@ export class MarketplaceScraper {
         await this.browser.close();
     }
 
-    public async fetchFirstListings(): Promise<ListingData[]> {
-        const url = urlGenerator(this.options);
+    private async fetchFirstListings(): Promise<ListingData[]> {
+        const url = urlGenerator(this.requestOptions);
 
         const response = await axiosInstance.get(url, {
             headers: {
@@ -70,7 +125,7 @@ export class MarketplaceScraper {
         return listingDetails;
     }
 
-    public async *handlePage(page: Page): AsyncGenerator<ListingData> {
+    private async *handlePage(page: Page): AsyncGenerator<ListingData> {
         const scrollManager = new ScrollManager(page);
         const popupHandler = new PopupHandler(page);
 
@@ -94,7 +149,7 @@ export class MarketplaceScraper {
         return jsonProcessor.getListingData();
     }
 
-    async waitForListingLoadPost(page: Page): Promise<HTTPRequest | null> {
+    private async waitForListingLoadPost(page: Page): Promise<HTTPRequest | null> {
         try {
             const request = await new Promise<HTTPRequest | null>((resolve) => {
                 page.on('requestfinished', (request) => {
@@ -118,6 +173,87 @@ export class MarketplaceScraper {
                 return null;
             }
             throw error;
+        }
+    }
+
+    public async *scrapeWithCache(): AsyncGenerator<Listing> {
+        const previousOutput: ListingData[] = [];
+
+        // Fetch initial listings and add to previous output
+        for (const listingData of await this.fetchFirstListings()) {
+            previousOutput.push(listingData);
+            yield await DatabaseManager.addListing(
+                listingData,
+                this.query,
+                ListingSource.Marketplace,
+                this.searchCriteria,
+            );
+        }
+
+        const isInPreviousOutput = (listing: ListingData | Listing) =>
+            previousOutput.some((prevListing) => prevListing.url === listing.url);
+
+        // Wait until it's this process's turn
+        await QueueManager.waitUntilNextInLine(this.processId!);
+
+        // Check for existing cached listings
+        const cachedListings = await DatabaseManager.getListings(
+            this.query,
+            this.searchCriteria,
+        );
+        const existingProcess = await QueueManager.findQueueProcess(
+            this.query,
+            this.searchCriteria,
+            this.processId!,
+        );
+
+        if (cachedListings !== null && !(existingProcess?.status === 'processing')) {
+            for (const listing of cachedListings) {
+                yield listing;
+            }
+            await QueueManager.finishQueueProcess(this.processId!);
+            return;
+        }
+
+        let subGenerator: AsyncGenerator<Listing>;
+        if (existingProcess?.status === 'processing') {
+            await this.cleanup();
+            subGenerator = QueueManager.generateFromExisting(existingProcess.id);
+        } else {
+            subGenerator = this.scraperGeneratorWithCache(
+                isInPreviousOutput,
+                this.query,
+                this.searchCriteria,
+            );
+        }
+
+        console.log('Here');
+
+        // Yield new listings
+        for await (const listing of subGenerator) {
+            if (isInPreviousOutput(listing)) {
+                continue;
+            }
+            yield listing;
+        }
+        await QueueManager.finishQueueProcess(this.processId!);
+    }
+
+    private async *scraperGeneratorWithCache(
+        isInPreviousOutput: (listing: ListingData | Listing) => boolean,
+        searchQuery: string,
+        searchCriteria?: SearchCriteria,
+    ): AsyncGenerator<Listing> {
+        for await (const listingData of this.scrape()) {
+            if (isInPreviousOutput(listingData)) {
+                continue;
+            }
+            yield await DatabaseManager.addListing(
+                listingData,
+                searchQuery,
+                ListingSource.Marketplace,
+                searchCriteria,
+            );
         }
     }
 }

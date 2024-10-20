@@ -1,11 +1,9 @@
 import { NextRequest } from 'next/server';
 import { ApiResponse } from '@/app/api/v1/_util/ApiResponse';
 import { MarketplaceScraper } from '@/app/api/v1/listings/_marketplace/MarketplaceScraper';
-import { MarketplaceLocation } from '@/types/marketplace';
 import { findFirstInvalidOption, isValidRequestOptions } from '@/types/requests';
 import { DatabaseManager } from '@/app/api/v1/listings/_database/DatabaseManager';
 import { QueueManager } from '@/app/api/v1/listings/_database/QueueManager';
-import { marketplaceGenerator } from '@/app/api/v1/listings/_marketplace/marketplaceGenerator';
 import { generatorToStream } from '@/app/api/v1/_util/generatorToStream';
 import { OkidokiScraper } from '@/app/api/v1/listings/_okidoki/OkidokiScraper';
 import { OstaFetcher } from '@/app/api/v1/listings/_osta/OstaFetcher';
@@ -63,21 +61,11 @@ export async function GET(req: NextRequest) {
         );
     }
 
-    const processId = await QueueManager.addToQueue(params.query, searchCriteria);
-
-    const options = {
-        query: params.query,
-        location: MarketplaceLocation.Paide,
-        radius: 200,
-    };
-    const marketplaceScraper = new MarketplaceScraper(options);
-
-    const marketplace = marketplaceGenerator(
-        marketplaceScraper,
-        processId,
+    const marketplaceScraper = await MarketplaceScraper.init(
         params.query,
         searchCriteria,
     );
+    const marketplace = marketplaceScraper.scrapeWithCache();
 
     const okidokiScraper = new OkidokiScraper(params.query, searchCriteria);
     const okidoki = okidokiScraper.scrapeWithCache();
