@@ -37,7 +37,7 @@ export class OstaFetcher {
         this.searchCriteria = searchCriteria;
     }
 
-    private craftQueryURL(query: string, page: number): string {
+    private craftQueryURL(page: number): string {
         // Osta.ee has a fixed page size of 60, 120, or 180
         const pageSize: 60 | 120 | 180 = 60;
         const url = new URL('https://api.osta.ee/api/search/');
@@ -45,7 +45,7 @@ export class OstaFetcher {
             [key: string]: string;
         } = {
             // The search query is 'q[q]' for some reason
-            'q[q]': query,
+            'q[q]': this.query,
             // Page size is documented as 'limit', but it is actually 'pagesize'
             pagesize: String(pageSize),
             // Page number is documented as 'page', but we actually need to use 'start'
@@ -65,7 +65,6 @@ export class OstaFetcher {
     }
 
     private async *scrapeProcess(
-        query: string,
         cycleTLS: CycleTLSClient,
     ): AsyncGenerator<ListingDataWithDate> {
         let currentPage = 1;
@@ -73,7 +72,7 @@ export class OstaFetcher {
         const foundListingIds = new Set<number>();
 
         while (hasNextPage) {
-            const url = this.craftQueryURL(query, currentPage);
+            const url = this.craftQueryURL(currentPage);
             console.log(url);
 
             // Fetch the page content
@@ -128,18 +127,18 @@ export class OstaFetcher {
         }
     }
 
-    public async *scrape(query: string): AsyncGenerator<ListingDataWithDate> {
+    public async *scrape(): AsyncGenerator<ListingDataWithDate> {
         const cycleTLS = await initCycleTLS();
 
         try {
-            yield* this.scrapeProcess(query, cycleTLS);
+            yield* this.scrapeProcess(cycleTLS);
         } finally {
             await cycleTLS.exit();
         }
     }
 
     public async *scrapeWithCache(): AsyncGenerator<Listing> {
-        for await (const listingData of this.scrape(this.query)) {
+        for await (const listingData of this.scrape()) {
             if (
                 this.searchCriteria?.maxDaysListed &&
                 listingData.listedAt.getTime() <

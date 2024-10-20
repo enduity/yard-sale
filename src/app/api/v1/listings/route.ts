@@ -79,8 +79,8 @@ export async function GET(req: NextRequest) {
         searchCriteria,
     );
 
-    const okidokiScraper = new OkidokiScraper();
-    const okidoki = okidokiScraper.scrapeWithCache(params.query, searchCriteria);
+    const okidokiScraper = new OkidokiScraper(params.query, searchCriteria);
+    const okidoki = okidokiScraper.scrapeWithCache();
 
     const ostaFetcher = new OstaFetcher(params.query, searchCriteria);
     const osta = ostaFetcher.scrapeWithCache();
