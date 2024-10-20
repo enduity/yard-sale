@@ -6,7 +6,15 @@ import { SearchCriteria } from '@/types/search';
 import initCycleTLS from 'cycletls';
 
 export class OkidokiScraper {
-    private async *scrape(query: string): AsyncGenerator<ListingDataWithDate> {
+    query: string;
+    searchCriteria?: SearchCriteria;
+
+    constructor(query: string, searchCriteria?: SearchCriteria) {
+        this.query = query;
+        this.searchCriteria = searchCriteria;
+    }
+
+    private async *scrape(): AsyncGenerator<ListingDataWithDate> {
         let currentPage = 1;
         let hasNextPage = true;
         const cycleTLS = await initCycleTLS();
@@ -15,7 +23,7 @@ export class OkidokiScraper {
             while (hasNextPage) {
                 // Construct the URL for the search
                 const url = `https://www.okidoki.ee/buy/all/?query=${encodeURIComponent(
-                    query,
+                    this.query,
                 )}&p=${currentPage}`;
 
                 // Fetch the page content
@@ -83,23 +91,20 @@ export class OkidokiScraper {
         }
     }
 
-    public async *scrapeWithCache(
-        query: string,
-        searchCriteria?: SearchCriteria,
-    ): AsyncGenerator<Listing> {
-        for await (const listingData of this.scrape(query)) {
+    public async *scrapeWithCache(): AsyncGenerator<Listing> {
+        for await (const listingData of this.scrape()) {
             if (
-                searchCriteria?.maxDaysListed &&
+                this.searchCriteria?.maxDaysListed &&
                 listingData.listedAt.getTime() <
-                    Date.now() - searchCriteria.maxDaysListed * 24 * 60 * 60 * 1000
+                    Date.now() - this.searchCriteria.maxDaysListed * 24 * 60 * 60 * 1000
             ) {
                 continue;
             }
             const listing = await DatabaseManager.addListing(
                 listingData,
-                query,
+                this.query,
                 ListingSource.Okidoki,
-                searchCriteria,
+                this.searchCriteria,
             );
             yield listing;
         }
