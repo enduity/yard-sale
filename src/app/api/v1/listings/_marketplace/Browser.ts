@@ -12,22 +12,20 @@ export class Browser {
     }
 
     private init(
-        HeadLess: boolean = false,
+        HeadLess: boolean = true,
         SlowDown: number = 0,
-        DevTools: boolean = true,
+        DevTools: boolean = false,
     ) {
         if (!this.browser) {
             this.browser = this.startBrowser(HeadLess, SlowDown, DevTools);
         }
 
-        // Listen to Disconnect event, and restart.
         this.browser.then((browserInstance) => {
             browserInstance.on('disconnected', async () => {
-                console.error('Puppeteer browser crashed, restarting browser.');
-                await this.releaseBrowser();
-                if (browserInstance.process() != null)
+                if (browserInstance.process() != null) {
+                    console.warn('Puppeteer browser closed improperly. Killing process.');
                     browserInstance.process()!.kill('SIGINT');
-                this.init();
+                }
             });
         });
     }
@@ -110,7 +108,7 @@ export class Browser {
             console.info('Closing page:', URL);
             await page.close();
         } finally {
-            await this.releaseBrowser(); // Close the browser after the page usage is completed.
+            await this.close(); // Close the browser after the page usage is completed.
         }
     }
 
@@ -143,12 +141,6 @@ export class Browser {
 
         await page.goto(URL, options);
         return page;
-    }
-
-    private async releaseBrowser() {
-        console.warn('Puppeteer browser releasing and closing.');
-        const browser = await this.browser;
-        await browser.close();
     }
 
     public async close() {
