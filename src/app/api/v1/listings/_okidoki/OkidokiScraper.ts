@@ -3,7 +3,7 @@ import { CycleTLSClient } from 'cycletls';
 import { BaseScraper } from '@/app/api/v1/listings/_common/BaseScraper';
 import { fetchWithCycleTLS } from '@/app/api/v1/listings/_common/fetchWithCycleTLS';
 import { ListingDataWithDate, ListingSource } from '@/types/listings';
-import { SearchCriteria } from '@/types/search';
+import { Condition, SearchCriteria } from '@/types/search';
 
 export class OkidokiScraper extends BaseScraper {
     constructor(query: string, searchCriteria?: SearchCriteria) {
@@ -18,6 +18,13 @@ export class OkidokiScraper extends BaseScraper {
             query: this.query,
             p: String(page),
         };
+
+        const condition = this.searchCriteria?.condition;
+        if (condition === Condition.New) {
+            queryParams.cond = '1';
+        } else if (condition === Condition.Used) {
+            queryParams.cond = '2';
+        }
 
         url.search = Object.keys(queryParams)
             .map((key) => {
