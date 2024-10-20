@@ -21,7 +21,7 @@ import { QueueManager } from '@/app/api/v1/listings/_database/QueueManager';
 import { Condition, SearchCriteria } from '@/types/search';
 
 export class MarketplaceScraper {
-    private browser: Browser;
+    private browser?: Browser;
     private readonly query: string;
     private readonly searchCriteria?: SearchCriteria;
     private processId?: number;
@@ -44,8 +44,6 @@ export class MarketplaceScraper {
             this.options = options;
         }
         this.requestOptions = this.getConfiguration();
-
-        this.browser = new Browser();
     }
 
     public static async init(
@@ -76,7 +74,7 @@ export class MarketplaceScraper {
     }
 
     private async *scrape(): AsyncGenerator<ListingData> {
-        yield* this.browser.usePage<ListingData>(
+        yield* this.browser!.usePage<ListingData>(
             urlGenerator(this.requestOptions),
             { waitUntil: 'networkidle0' },
             this.handlePage.bind(this),
@@ -84,7 +82,7 @@ export class MarketplaceScraper {
     }
 
     public async cleanup(): Promise<void> {
-        await this.browser.close();
+        await this.browser?.close();
     }
 
     private async fetchFirstListings(): Promise<ListingData[]> {
@@ -193,6 +191,8 @@ export class MarketplaceScraper {
 
         // Wait until it's this process's turn
         await QueueManager.waitUntilNextInLine(this.processId!);
+
+        this.browser = new Browser();
 
         const existingProcess = await QueueManager.findQueueProcess(
             this.query,
