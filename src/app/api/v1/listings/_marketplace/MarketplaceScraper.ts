@@ -196,24 +196,11 @@ export class MarketplaceScraper {
         // Wait until it's this process's turn
         await QueueManager.waitUntilNextInLine(this.processId!);
 
-        // Check for existing cached listings
-        const cachedListings = await DatabaseManager.getListings(
-            this.query,
-            this.searchCriteria,
-        );
         const existingProcess = await QueueManager.findQueueProcess(
             this.query,
             this.searchCriteria,
             this.processId!,
         );
-
-        if (cachedListings !== null && !(existingProcess?.status === 'processing')) {
-            for (const listing of cachedListings) {
-                yield listing;
-            }
-            await QueueManager.finishQueueProcess(this.processId!);
-            return;
-        }
 
         let subGenerator: AsyncGenerator<Listing>;
         if (existingProcess?.status === 'processing') {

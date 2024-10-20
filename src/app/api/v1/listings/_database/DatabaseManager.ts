@@ -96,13 +96,19 @@ export class DatabaseManager {
     public static async getListings(
         searchQuery: string,
         searchCriteria?: SearchCriteria,
+        sourceFilter?: ListingSource,
     ): Promise<Listing[] | null> {
         const searches = await prisma.search.findMany({
             where: {
                 query: searchQuery,
                 searchCriteria: searchCriteria,
             },
-            include: { results: { include: { thumbnail: true } } },
+            include: {
+                results: {
+                    include: { thumbnail: true },
+                    where: sourceFilter ? { source: sourceFilter } : undefined,
+                },
+            },
         });
 
         if (!searches) {
