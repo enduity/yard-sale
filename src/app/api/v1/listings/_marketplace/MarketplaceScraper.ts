@@ -18,7 +18,7 @@ import { ScrollManager } from '@/app/api/v1/listings/_marketplace/ScrollManager'
 import { PopupHandler } from '@/app/api/v1/listings/_marketplace/PopupHandler';
 import { DatabaseManager } from '@/app/api/v1/listings/_database/DatabaseManager';
 import { QueueManager } from '@/app/api/v1/listings/_database/QueueManager';
-import { SearchCriteria } from '@/types/search';
+import { Condition, SearchCriteria } from '@/types/search';
 
 export class MarketplaceScraper {
     private browser: Browser;
@@ -59,11 +59,19 @@ export class MarketplaceScraper {
     }
 
     private getConfiguration(): MarketplaceOptions {
+        let condition: MarketplaceOptions['itemCondition'];
+        if (this.searchCriteria?.condition === Condition.New) {
+            condition = ['new'];
+        } else if (this.searchCriteria?.condition === Condition.Used) {
+            condition = ['used_like_new', 'used_good', 'used_fair'];
+        }
+
         return {
             query: this.query,
             location: this.options.location,
             radius: this.options.radius,
             daysSinceListed: this.searchCriteria?.maxDaysListed,
+            itemCondition: condition,
         };
     }
 

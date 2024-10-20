@@ -1,7 +1,7 @@
 import { ListingDataWithDate, ListingSource } from '@/types/listings';
 import { fetchWithCycleTLS } from '@/app/api/v1/listings/_common/fetchWithCycleTLS';
 import { BaseScraper } from '@/app/api/v1/listings/_common/BaseScraper';
-import { SearchCriteria } from '@/types/search';
+import { Condition, SearchCriteria } from '@/types/search';
 import { CycleTLSClient } from 'cycletls';
 
 type OstaJsonListing = {
@@ -37,8 +37,9 @@ export class OstaFetcher extends BaseScraper {
         // Osta.ee has a fixed page size of 60, 120, or 180
         const pageSize: 60 | 120 | 180 = 60;
         const url = new URL('https://api.osta.ee/api/search/');
+
         const queryParams: {
-            [key: string]: string;
+            [key: string]: string | string[];
         } = {
             // The search query is 'q[q]' for some reason
             'q[q]': this.query,
@@ -47,16 +48,32 @@ export class OstaFetcher extends BaseScraper {
             // Page number is documented as 'page', but we actually need to use 'start'
             start: String((page - 1) * pageSize),
         };
-        url.search = Object.keys(queryParams)
-            .map((key) => {
-                const encodedKey = encodeURIComponent(key);
-                const encodedValue = encodeURIComponent(queryParams[key]).replace(
-                    /%20/g,
-                    '+',
-                );
-                return `${encodedKey}=${encodedValue}`;
-            })
-            .join('&');
+
+        const condition = this.searchCriteria?.condition;
+        if (condition === Condition.New) {
+            queryParams['q[condition][]'] = ['new'];
+        } else if (condition === Condition.Used) {
+            queryParams['q[condition][]'] = ['old', 'antique', 'used'];
+        }
+
+        // Support array values in a way compatible with the API
+        const mapArrayValue = (encodedKey: string, value: string[]) => {
+            return value.map(
+                (v) => `${encodedKey}=${encodeURIComponent(v).replace(/%20/g, '+')}`,
+            );
+        };
+
+        const getEncodedEntry = ([key, value]: [string, string | string[]]) => {
+            const encodedKey = encodeURIComponent(key);
+            if (Array.isArray(value)) {
+                return mapArrayValue(encodedKey, value);
+            } else {
+                return `${encodedKey}=${encodeURIComponent(value).replace(/%20/g, '+')}`;
+            }
+        };
+
+        url.search = Object.entries(queryParams).flatMap(getEncodedEntry).join('&');
+
         return url.toString();
     }
 
