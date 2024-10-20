@@ -59,22 +59,12 @@ export class MarketplaceScraper {
     }
 
     private getConfiguration(): MarketplaceOptions {
-        const options: MarketplaceOptions = {
+        return {
             query: this.query,
             location: this.options.location,
             radius: this.options.radius,
+            daysSinceListed: this.searchCriteria?.maxDaysListed,
         };
-        if (this.searchCriteria?.maxDaysListed) {
-            // Temporary until type is fixed:
-            // Find the closest value to the maxDaysListed in the array
-            options.daysSinceListed = [1, 7, 30].reduce((acc, curr) =>
-                Math.abs(curr - this.searchCriteria!.maxDaysListed!) <
-                Math.abs(acc - this.searchCriteria!.maxDaysListed!)
-                    ? curr
-                    : acc,
-            ) as 1 | 7 | 30;
-        }
-        return options;
     }
 
     private async *scrape(): AsyncGenerator<ListingData> {
