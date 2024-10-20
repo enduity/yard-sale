@@ -20,3 +20,8 @@ export type MarketplaceOptions = {
     availability?: 'sold';
     daysSinceListed?: 1 | 7 | 30;
 };
+
+export type MarketplaceScraperOptions = {
+    location: MarketplaceLocation;
+    radius: number;
+};
