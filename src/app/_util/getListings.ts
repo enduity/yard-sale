@@ -1,27 +1,5 @@
 import { Listing as ListingModel } from '@/types/listings';
-
-// Fix for TypeScript not understanding the polyfill below
-declare global {
-    interface ReadableStream<R> {
-        [Symbol.asyncIterator](): AsyncIterableIterator<R>;
-    }
-}
-
-/**
- * Polyfill to make ReadableStream iterable with for-await-of
- */
-ReadableStream.prototype[Symbol.asyncIterator] = async function* () {
-    const reader = this.getReader();
-    try {
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) return;
-            yield value;
-        }
-    } finally {
-        reader.releaseLock();
-    }
-};
+import { ReadableStream } from 'web-streams-polyfill';
 
 /**
  * Get listings from the marketplace, given a search term.
@@ -31,10 +9,9 @@ ReadableStream.prototype[Symbol.asyncIterator] = async function* () {
  */
 export async function* getListings(searchTerm: string): AsyncGenerator<ListingModel[]> {
     const response = await fetch(`/api/v1/listings?query=${searchTerm}&location=Eesti`);
-
-    const readableStream: ReadableStream<Uint8Array> | null = response.body;
+    const readableStream = response.body as ReadableStream<Uint8Array> | null;
     if (!readableStream) {
-        throw new Error('Failed to get listings');
+        throw new Error('Failed to fetch listings');
     }
 
     for await (const listingData of readableStream) {
