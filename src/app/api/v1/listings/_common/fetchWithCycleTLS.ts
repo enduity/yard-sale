@@ -5,7 +5,7 @@ export async function fetchWithCycleTLS(
     url: string,
     body: string,
 ) {
-    const result = await cycleTLS(
+    return await cycleTLS(
         url,
         {
             body: body,
@@ -15,5 +15,4 @@ export async function fetchWithCycleTLS(
         },
         'get',
     );
-    return result;
 }

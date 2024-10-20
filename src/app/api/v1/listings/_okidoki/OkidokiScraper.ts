@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
 import { Listing, ListingDataWithDate, ListingSource } from '@/types/listings';
 import { DatabaseManager } from '@/app/api/v1/listings/_database/DatabaseManager';
-import { fetchWithCycleTLS } from '@/app/api/v1/listings/_util/fetchWithCycleTLS';
+import { fetchWithCycleTLS } from '@/app/api/v1/listings/_common/fetchWithCycleTLS';
 import { SearchCriteria } from '@/types/search';
 import initCycleTLS from 'cycletls';
 
