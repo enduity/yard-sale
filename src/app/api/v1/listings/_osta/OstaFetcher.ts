@@ -1,8 +1,8 @@
-import { Listing, ListingDataWithDate, ListingSource } from '@/types/listings';
-import { DatabaseManager } from '@/app/api/v1/listings/_database/DatabaseManager';
+import { ListingDataWithDate, ListingSource } from '@/types/listings';
 import { fetchWithCycleTLS } from '@/app/api/v1/listings/_common/fetchWithCycleTLS';
+import { BaseScraper } from '@/app/api/v1/listings/_common/BaseScraper';
 import { SearchCriteria } from '@/types/search';
-import initCycleTLS, { CycleTLSClient } from 'cycletls';
+import { CycleTLSClient } from 'cycletls';
 
 type OstaJsonListing = {
     id: number;
@@ -28,13 +28,9 @@ type OstaJsonListing = {
       }
 );
 
-export class OstaFetcher {
-    private readonly query: string;
-    private readonly searchCriteria?: SearchCriteria;
-
+export class OstaFetcher extends BaseScraper {
     constructor(query: string, searchCriteria?: SearchCriteria) {
-        this.query = query;
-        this.searchCriteria = searchCriteria;
+        super(query, ListingSource.OstaEE, searchCriteria);
     }
 
     private craftQueryURL(page: number): string {
@@ -64,7 +60,7 @@ export class OstaFetcher {
         return url.toString();
     }
 
-    private async *scrapeProcess(
+    protected async *scrapeProcess(
         cycleTLS: CycleTLSClient,
     ): AsyncGenerator<ListingDataWithDate> {
         let currentPage = 1;
@@ -73,9 +69,6 @@ export class OstaFetcher {
 
         while (hasNextPage) {
             const url = this.craftQueryURL(currentPage);
-            console.log(url);
-
-            // Fetch the page content
             const response = await fetchWithCycleTLS(cycleTLS, url, '');
             if (!response.body || typeof response.body !== 'object') {
                 throw new Error('Invalid response body');
@@ -90,7 +83,6 @@ export class OstaFetcher {
                 }
                 foundListingIds.add(item.id);
                 if (!item.buynow_allowed) {
-                    // Auctions are not supported for now
                     continue;
                 }
                 let price = item.buynow_price;
@@ -104,8 +96,6 @@ export class OstaFetcher {
                 if (imageId) {
                     const imageUrlSlice = imageId.slice(imageId.length - 4);
                     thumbnailSrc = `https://osta.img-bcg.eu/item/11/${imageUrlSlice}/${imageId}.jpg`;
-                } else {
-                    console.log(item);
                 }
                 const listingData: ListingDataWithDate = {
                     price,
@@ -117,42 +107,12 @@ export class OstaFetcher {
                 };
                 yield listingData;
             }
-            console.log(`Found ${foundListingIds.size} listings out of ${total}`);
 
             if (foundListingIds.size >= total) {
                 hasNextPage = false;
             } else {
                 currentPage++;
             }
-        }
-    }
-
-    public async *scrape(): AsyncGenerator<ListingDataWithDate> {
-        const cycleTLS = await initCycleTLS();
-
-        try {
-            yield* this.scrapeProcess(cycleTLS);
-        } finally {
-            await cycleTLS.exit();
-        }
-    }
-
-    public async *scrapeWithCache(): AsyncGenerator<Listing> {
-        for await (const listingData of this.scrape()) {
-            if (
-                this.searchCriteria?.maxDaysListed &&
-                listingData.listedAt.getTime() <
-                    Date.now() - this.searchCriteria.maxDaysListed * 24 * 60 * 60 * 1000
-            ) {
-                continue;
-            }
-            const listing = await DatabaseManager.addListing(
-                listingData,
-                this.query,
-                ListingSource.OstaEE,
-                this.searchCriteria,
-            );
-            yield listing;
         }
     }
 }
