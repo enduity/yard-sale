@@ -9,7 +9,12 @@ export function Listing({ listing }: { listing: ListingModel }) {
     };
 
     return (
-        <div className="relative flex flex-col rounded-lg bg-white p-4 shadow-md">
+        <a
+            className="relative flex flex-col rounded-lg bg-white p-4 shadow-md"
+            href={listing.url}
+            target="_blank"
+            rel="noreferrer"
+        >
             <div
                 className="relative mb-4 aspect-square w-full max-w-full overflow-hidden
                     rounded-md"
@@ -35,6 +40,6 @@ export function Listing({ listing }: { listing: ListingModel }) {
                     </span>
                 </div>
             </div>
-        </div>
+        </a>
     );
 }
