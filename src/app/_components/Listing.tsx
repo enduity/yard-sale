@@ -15,7 +15,7 @@ export function Listing({ listing }: { listing: ListingModel }) {
                     rounded-md"
             >
                 <Image
-                    src={`/api/v1/thumbnails?id=${listing.thumbnailId}`}
+                    src={`/api/v1/thumbnails/${listing.thumbnailId}`}
                     alt={listing.title}
                     className="object-cover"
                     fill={true}
