@@ -18,15 +18,15 @@ export function urlGenerator(options: MarketplaceOptions): string {
 
     params['query'] = query;
     if (radius) params['radius'] = String(radius);
-    if (minPrice) params['min_price'] = String(minPrice);
-    if (maxPrice) params['max_price'] = String(maxPrice);
+    if (minPrice) params['minPrice'] = String(minPrice);
+    if (maxPrice) params['maxPrice'] = String(maxPrice);
     if (sortBy) {
-        params['sort_by'] = sortBy.key;
-        params['sort_order'] = sortBy.order;
+        params['sortBy'] = sortBy.key;
+        params['sortOrder'] = sortBy.order;
     }
-    if (itemCondition) params['item_condition'] = itemCondition.join(',');
+    if (itemCondition) params['itemCondition'] = itemCondition.join(',');
     if (availability) params['availability'] = availability;
-    if (daysSinceListed) params['days_since_listed'] = String(daysSinceListed);
+    if (daysSinceListed) params['daysSinceListed'] = String(daysSinceListed);
 
     const queryString = Object.keys(params)
         .map((key) => {
