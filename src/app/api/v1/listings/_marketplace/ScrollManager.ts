@@ -38,7 +38,8 @@ export class ScrollManager {
         const newContentBody = await newContentRequest?.response()?.text();
 
         if (!newContentRequest || !newContentBody) {
-            throw new Error('Failed to load new content');
+            console.warn('No new content found');
+            return;
         }
 
         if (!(await checkSeeMorePopup())) {

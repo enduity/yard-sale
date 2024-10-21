@@ -147,23 +147,26 @@ export class MarketplaceScraper {
 
     private async waitForListingLoadPost(page: Page): Promise<HTTPRequest | null> {
         try {
-            const request = await new Promise<HTTPRequest | null>((resolve) => {
-                page.on('requestfinished', (request) => {
-                    if (
-                        request.method() === 'POST' &&
-                        request.url().includes('graphql/') &&
-                        request
-                            ?.postData()
-                            ?.includes(
-                                'fb_api_req_friendly_name=CometMarketplaceSearchContentPaginationQuery',
-                            )
-                    ) {
-                        resolve(request);
-                    }
-                });
-            });
-            console.log('POST request to graphql/ with the expected form data detected');
-            return request;
+            return await Promise.race([
+                new Promise<HTTPRequest | null>((resolve) => {
+                    page.on('requestfinished', (request) => {
+                        if (
+                            request.method() === 'POST' &&
+                            request.url().includes('graphql/') &&
+                            request
+                                ?.postData()
+                                ?.includes(
+                                    'fb_api_req_friendly_name=CometMarketplaceSearchContentPaginationQuery',
+                                )
+                        ) {
+                            resolve(request);
+                        }
+                    });
+                }),
+                new Promise<null>((_, reject) =>
+                    setTimeout(() => reject(new TimeoutError('Request timed out')), 5000),
+                ),
+            ]);
         } catch (error) {
             if (error instanceof TimeoutError) {
                 return null;
@@ -211,8 +214,6 @@ export class MarketplaceScraper {
                 this.searchCriteria,
             );
         }
-
-        console.log('Here');
 
         // Yield new listings
         for await (const listing of subGenerator) {
