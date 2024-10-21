@@ -5,6 +5,7 @@ export class Browser {
     private readonly TIMEOUT: number;
     private readonly USER_AGENT =
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36';
+    private browserPid?: number;
 
     constructor(_timeout: number = 10000) {
         this.TIMEOUT = _timeout;
@@ -21,10 +22,18 @@ export class Browser {
         }
 
         this.browser.then((browserInstance) => {
+            browserInstance.process()?.on('spawn', () => {
+                this.browserPid = browserInstance.process()?.pid;
+                browserInstance.process()?.on('exit', () => {
+                    this.browserPid = undefined;
+                });
+            });
             browserInstance.on('disconnected', async () => {
-                if (browserInstance.process() != null) {
+                await browserInstance.close();
+
+                if (this.browserPid !== undefined) {
                     console.warn('Puppeteer browser closed improperly. Killing process.');
-                    browserInstance.process()!.kill('SIGINT');
+                    browserInstance.process()?.kill('SIGINT');
                 }
             });
         });
