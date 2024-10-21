@@ -107,3 +107,17 @@ export function findFirstInvalidOption(options: Partial<RequestOptions>): string
     const invalidParams = getInvalidOptionNames(options);
     return invalidParams.length > 0 ? invalidParams[0] : null;
 }
+
+/**
+ * Represents the options for fetching listings on the frontend.
+ */
+export type GetListingsOptions = Pick<
+    RequestOptions,
+    'query' | 'condition' | 'maxDaysListed'
+>;
+
+/**
+ * GetListingsOptions with all properties optional, omitting the query.
+ * Useful for seperating the state of query and other options to optimize re-renders.
+ */
+export type SearchOptionsState = Partial<Omit<GetListingsOptions, 'query'>>;

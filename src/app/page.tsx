@@ -5,9 +5,11 @@ import { usePreviousSearches } from '@/app/_util/usePreviousSearches';
 import { useSearchResults } from '@/app/_util/useSearchResults';
 import { SearchBar } from '@/app/_components/SearchBar/SearchBar';
 import { SearchResults } from '@/app/_components/SearchResults';
+import { SearchOptionsState } from '@/types/requests';
 
 export default function Home() {
     const [searchTerm, setSearchTerm] = useState('');
+    const [searchOptions, setSearchOptions] = useState<SearchOptionsState>({});
     const [hasSearched, setHasSearched] = useState(false);
     const [showHistoryCleared, setShowHistoryCleared] = useState(false);
 
@@ -19,7 +21,7 @@ export default function Home() {
     const handleSearch = async () => {
         setHasSearched(true);
         updatePreviousSearches(searchTerm);
-        void executeSearch(searchTerm);
+        void executeSearch(searchTerm, searchOptions);
     };
 
     return (
@@ -31,6 +33,8 @@ export default function Home() {
             <SearchBar
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
+                searchOptions={searchOptions}
+                setSearchOptions={setSearchOptions}
                 handleSearch={handleSearch}
                 previousSearches={previousSearches}
                 clearSearchHistory={() => {
