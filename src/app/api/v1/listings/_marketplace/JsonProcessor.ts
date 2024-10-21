@@ -115,7 +115,7 @@ export class JsonProcessor {
     }
 
     extractListingDetails(listing: JsonListing): ListingData {
-        const price = parseFloat(listing.listing_price?.amount) || -1;
+        const price = parseFloat(listing.listing_price?.amount) ?? -1;
         const title = listing.marketplace_listing_title || '';
         const location = listing.location?.reverse_geocode?.city_page?.display_name || '';
         const thumbnailSrc = listing.primary_listing_photo?.image?.uri || '';
