@@ -9,7 +9,7 @@ type RateLimitRequest = {
 };
 const rateLimitRequests: RateLimitRequest[] = [];
 const RATE_LIMITS = {
-    '/api/v1/listings': { limit: 2, window: 5 * 60 * 1000 }, // 2 requests per 5 minutes
+    '/api/v1/listings': { limit: 5, window: 5 * 60 * 1000 }, // 5 requests per 5 minutes
     '/api/v1/thumbnails': { limit: 100, window: 60 * 1000 }, // 100 requests per minute
 };
 const EXPIRATION_TIME =
