@@ -39,7 +39,7 @@ const nextConfig = {
                 new CopyWebpackPlugin({
                     patterns: executableFilenames.map((filename) => ({
                         from: path.join(cycleTlsPath, filename),
-                        to: path.join(destinationPath, filename),
+                        to: destinationPath,
                     })),
                 }),
             );
