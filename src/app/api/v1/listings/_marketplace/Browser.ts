@@ -4,6 +4,8 @@ import puppeteer, {
     Page,
     PuppeteerLaunchOptions,
 } from 'puppeteer';
+import { anonymizeProxy } from 'proxy-chain';
+import ProxyManager from '@/lib/ProxyManager';
 
 export class Browser {
     private browser!: Promise<BrowserType>;
@@ -11,6 +13,7 @@ export class Browser {
     private readonly USER_AGENT =
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36';
     private browserPid?: number;
+    private currentProxy?: string;
 
     constructor(_timeout: number = 10000) {
         this.TIMEOUT = _timeout;
@@ -61,6 +64,16 @@ export class Browser {
         devtools,
         executablePath,
     }: PuppeteerLaunchOptions): Promise<BrowserType> {
+        const proxy = ProxyManager.getRandomUnblockedProxyUrl();
+        this.currentProxy = proxy ?? undefined;
+
+        let newProxy: string | undefined;
+        if (proxy) {
+            console.info('Puppeteer browser using proxy:', proxy);
+            newProxy = await anonymizeProxy(proxy);
+            console.info('Anonymized proxy:', newProxy);
+        }
+
         return await puppeteer.launch({
             headless,
             devtools,
@@ -73,6 +86,7 @@ export class Browser {
                 '--no-first-run',
                 '--no-zygote',
                 '--disable-gpu',
+                ...(newProxy ? [`--proxy-server=${newProxy}`] : []),
             ],
             executablePath,
         });
@@ -154,7 +168,7 @@ export class Browser {
 
         await page.setUserAgent(this.USER_AGENT);
         await page.setJavaScriptEnabled(true);
-        page.setDefaultNavigationTimeout(this.TIMEOUT);
+        page.setDefaultNavigationTimeout(this.TIMEOUT + 10000);
 
         // Skips fonts and images for performance and efficiency
         await page.setRequestInterception(true);
@@ -174,5 +188,9 @@ export class Browser {
         console.warn('Puppeteer browser closing.');
         const browser = await this.browser;
         await browser.close();
+    }
+
+    public getCurrentProxy(): string | undefined {
+        return this.currentProxy;
     }
 }

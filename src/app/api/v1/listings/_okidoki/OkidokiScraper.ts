@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
 import { CycleTLSClient } from 'cycletls';
 import { BaseScraper } from '@/app/api/v1/listings/_common/BaseScraper';
-import { fetchWithCycleTLS } from '@/app/api/v1/listings/_common/fetchWithCycleTLS';
+import { fetchWithCycleTLS } from '@/lib/CycleTLS/fetchWithCycleTLS';
 import { ListingDataWithDate, ListingSource } from '@/types/listings';
 import { Condition, SearchCriteria } from '@/types/search';
 
@@ -44,7 +44,10 @@ export class OkidokiScraper extends BaseScraper {
 
         while (hasNextPage) {
             const url = this.craftQueryURL(currentPage);
-            const response = await fetchWithCycleTLS(cycleTLS, url, '');
+            const response = await fetchWithCycleTLS(cycleTLS, url);
+            if (!response?.body) {
+                throw new Error('Invalid response body');
+            }
             const html = String(response.body);
             const $ = cheerio.load(html);
 
