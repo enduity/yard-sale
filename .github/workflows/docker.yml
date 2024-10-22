@@ -1,0 +1,39 @@
+name: Docker Image Build and Push
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set short git commit SHA
+        id: vars
+        run: |
+          calculatedSha=$(git rev-parse --short ${{ github.sha }})
+          echo "COMMIT_SHORT_SHA=$calculatedSha" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: |
+            ghcr.io/enduity/yard-sale:latest
+            ghcr.io/enduity/yard-sale:${{ env.COMMIT_SHORT_SHA }}
+          cache-from: type=registry,ref=ghcr.io/enduity/yard-sale:buildcache
+          cache-to: type=registry,ref=ghcr.io/enduity/yard-sale:buildcache,mode=max
