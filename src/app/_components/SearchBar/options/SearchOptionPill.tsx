@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronUp } from '@/app/_components/SearchBar/icons';
 import { clsx } from 'clsx';
 
@@ -7,16 +7,40 @@ export function SearchOptionPill({
     optionUsed,
     dropdownActive,
     onToggle,
+    onClose,
     children,
 }: {
     text: string;
     optionUsed: boolean;
     dropdownActive: boolean;
     onToggle: () => void;
+    onClose: () => void;
     children: ReactNode;
 }) {
+    const optionContainer = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (
+                optionContainer.current &&
+                event.target instanceof HTMLElement &&
+                !optionContainer.current.contains(event.target) &&
+                dropdownActive
+            ) {
+                onClose();
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside, { capture: true });
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside, {
+                capture: true,
+            });
+        };
+    }, [onClose]);
+
     return (
-        <div className="relative">
+        <div className="relative" ref={optionContainer}>
             <button
                 className={clsx(
                     `flex flex-row items-center rounded-lg border border-gray-300 py-1

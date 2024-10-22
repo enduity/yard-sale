@@ -9,33 +9,8 @@ export function SearchOption({
     onClose: () => void;
     children: ReactNode;
 }) {
-    const dropdownRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (
-                dropdownRef.current &&
-                event.target instanceof HTMLElement &&
-                !dropdownRef.current.contains(event.target)
-            ) {
-                onClose();
-            }
-        }
-
-        document.addEventListener('mousedown', handleClickOutside, { capture: true });
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside, {
-                capture: true,
-            });
-        };
-    }, [onClose]);
-
     return (
-        <div
-            className="flex flex-col rounded-lg border bg-white px-4 py-3 shadow-md"
-            ref={dropdownRef}
-        >
+        <div className="flex flex-col rounded-lg border bg-white px-4 py-3 shadow-md">
             <div className="flex min-w-32 flex-row items-center justify-between">
                 <span className="font-semibold text-gray-800">{name}</span>
                 <button onClick={onClose} className="text-gray-500">
