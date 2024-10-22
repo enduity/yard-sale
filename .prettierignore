@@ -1,0 +1,45 @@
+# Ignore Next.js build output
+.next
+
+# Ignore npm dependencies
+node_modules
+
+# Ignore logs
+*.log
+
+# Ignore lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Ignore environment variable files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Ignore the coverage folder from test coverage tools
+coverage
+
+# Ignore static export files
+out
+
+# Ignore TypeScript build output
+*.d.ts
+
+# Ignore specific public/static folders
+public
+static
+
+# Ignore generated files
+.vscode
+dist
+
+# Ignore license file
+LICENSE.md
+LICENSE
+
+# Ignore sql and prisma files
+*.prisma
+*.sql
