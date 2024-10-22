@@ -2,6 +2,7 @@ import { Listing, ListingDataWithDate, ListingSource } from '@/types/listings';
 import { DatabaseManager } from '@/app/api/v1/listings/_database/DatabaseManager';
 import { SearchCriteria } from '@/types/search';
 import initCycleTLS, { CycleTLSClient } from 'cycletls';
+import { getCycleTLSPath } from '@/app/api/v1/_util/getCycleTLSPath';
 
 export abstract class BaseScraper {
     protected query: string;
@@ -38,7 +39,9 @@ export abstract class BaseScraper {
     }
 
     protected async *scrape(): AsyncGenerator<ListingDataWithDate> {
-        const cycleTLS = await initCycleTLS();
+        const cycleTLS = await initCycleTLS({
+            executablePath: getCycleTLSPath(),
+        });
         try {
             yield* this.scrapeProcess(cycleTLS);
         } finally {

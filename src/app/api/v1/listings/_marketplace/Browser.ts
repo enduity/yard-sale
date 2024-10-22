@@ -1,4 +1,9 @@
-import puppeteer, { Browser as BrowserType, GoToOptions, Page } from 'puppeteer';
+import puppeteer, {
+    Browser as BrowserType,
+    GoToOptions,
+    Page,
+    PuppeteerLaunchOptions,
+} from 'puppeteer';
 
 export class Browser {
     private browser!: Promise<BrowserType>;
@@ -12,13 +17,24 @@ export class Browser {
         this.init();
     }
 
-    private init(
-        HeadLess: boolean = true,
-        SlowDown: number = 0,
-        DevTools: boolean = false,
-    ) {
+    private init() {
+        const env = process.env.NODE_ENV;
+        let options: PuppeteerLaunchOptions = {
+            headless: false,
+            slowMo: 50,
+            devtools: true,
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+        };
+        if (env === 'production') {
+            options = {
+                headless: true,
+                slowMo: 0,
+                devtools: false,
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+            };
+        }
         if (!this.browser) {
-            this.browser = this.startBrowser(HeadLess, SlowDown, DevTools);
+            this.browser = this.startBrowser(options);
         }
 
         this.browser.then((browserInstance) => {
@@ -39,15 +55,16 @@ export class Browser {
         });
     }
 
-    private async startBrowser(
-        HeadLess: boolean,
-        SlowDown: number,
-        DevTools: boolean,
-    ): Promise<BrowserType> {
+    private async startBrowser({
+        headless,
+        slowMo,
+        devtools,
+        executablePath,
+    }: PuppeteerLaunchOptions): Promise<BrowserType> {
         return await puppeteer.launch({
-            headless: HeadLess,
-            devtools: DevTools,
-            slowMo: SlowDown,
+            headless,
+            devtools,
+            slowMo,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -57,6 +74,7 @@ export class Browser {
                 '--no-zygote',
                 '--disable-gpu',
             ],
+            executablePath,
         });
     }
 
