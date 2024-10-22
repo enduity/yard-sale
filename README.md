@@ -56,6 +56,51 @@ interface.
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser to see the app in action.
 
+### Using Docker
+
+Running this project with Docker is the recommended approach for ease and consistency. Follow the steps below to get
+started:
+
+1. **Pull the Latest Docker Image**
+
+   Retrieve the most recent Docker image from the GitHub Container Registry by executing:
+
+   ```bash
+   docker pull ghcr.io/enduity/yard-sale:latest
+   ```
+
+2. **Set Up Docker Compose**
+
+   Create a `docker-compose.yml` file in your project directory with the following configuration:
+
+   ```yaml
+   services:
+     yard-sale:
+       image: ghcr.io/enduity/yard-sale:latest
+       ports:
+         - "80:3000"  
+       # Ensure Puppeteer has the necessary capabilities
+       shm_size: '1gb'
+   ```
+
+   This setup maps port `80` on your host machine to port `3000` inside the Docker container, where the application is
+   running.
+
+3. **Launch the Container**
+
+   Start the Docker container using Docker Compose with the command:
+
+   ```bash
+   docker-compose up -d
+   ```
+
+   The `-d` flag runs the container in detached mode, allowing it to operate in the background.
+
+4. **Enable HTTPS (Optional but Recommended)**
+
+   For secure HTTPS support, it's advisable to configure an additional reverse proxy. Tools like Nginx or Traefik can be
+   integrated to handle SSL termination and provide enhanced security for your application.
+
 ### Environment Variables
 
 The default `.env` file includes:
