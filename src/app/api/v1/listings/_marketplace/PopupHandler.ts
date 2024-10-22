@@ -87,13 +87,50 @@ export class PopupHandler {
     }
 
     public async acceptCookies(): Promise<void> {
-        const cookiesButton = await this.page.waitForSelector(
-            'div[aria-label="Allow all cookies"][role="button"]:not([aria-disabled="true"])',
-            { timeout: 10000 },
-        );
-        if (!cookiesButton) {
-            throw new Error('Cookies button not found');
+        const selector =
+            'div[aria-label="Allow all cookies"][role="button"]:not([aria-disabled="true"])';
+        let cookiesButton;
+        try {
+            cookiesButton = await this.page.waitForSelector(selector, { timeout: 500 });
+        } catch (error) {
+            if (!(error instanceof TimeoutError)) {
+                throw error;
+            }
         }
-        await cookiesButton.click();
+        if (cookiesButton) {
+            await cookiesButton.click();
+            return;
+        }
+        /**
+         * In case the button takes longer, checking in the background.
+         * Not in the foreground, because some geos don't have cookie regulations
+         * and would never have a cookies button.
+         */
+        void (async () => {
+            let retries = 0;
+            let foundButton;
+            while (!foundButton && retries < 20) {
+                if (!this.page || this.page.isClosed()) {
+                    return;
+                }
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                try {
+                    foundButton = await this.page.$(selector);
+                } catch (error) {
+                    if (
+                        error instanceof Error &&
+                        error.message.includes('Execution context was destroyed')
+                    ) {
+                        return;
+                    }
+                    console.error('Error checking for cookies button:', error);
+                    return;
+                }
+                retries++;
+            }
+            if (foundButton) {
+                await foundButton.click();
+            }
+        })();
     }
 }
