@@ -37,7 +37,7 @@ export function SearchOptionPill({
                 capture: true,
             });
         };
-    }, [onClose]);
+    }, [onClose, dropdownActive]);
 
     return (
         <div className="relative" ref={optionContainer}>
