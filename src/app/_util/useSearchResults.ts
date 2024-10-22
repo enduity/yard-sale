@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { Listing as ListingModel } from '@/types/listings';
 import { getListings } from '@/app/_util/getListings';
 import { GetListingsOptions, SearchOptionsState } from '@/types/requests';
+import { GetListingsError } from '@/app/_util/GetListingsError';
 
 export function useSearchResults() {
     const [searchResults, setSearchResults] = useState<ListingModel[]>([]);
@@ -11,25 +12,29 @@ export function useSearchResults() {
         null,
     );
     const executedSearchOptions = useRef<GetListingsOptions | null>(null);
+    const [searchError, setSearchError] = useState<string | null>(null);
 
     const processDataGenerator = useCallback(
         async (currentSearchOptions: GetListingsOptions) => {
             if (dataGeneratorRef.current) {
                 try {
                     for await (const data of dataGeneratorRef.current) {
-                        console.log('Data:', data);
                         if (executedSearchOptions.current === currentSearchOptions) {
-                            console.log('Fetched data:', data);
                             const newSearchResults =
                                 searchResultsRef.current.concat(data);
                             setSearchResults(newSearchResults);
                             searchResultsRef.current = newSearchResults;
                         }
                     }
-                    console.log('No more data to fetch');
-                    setSearchLoading(false);
+                    setSearchError(null);
                 } catch (error) {
-                    console.error('Error fetching data:', error);
+                    if (error instanceof GetListingsError) {
+                        setSearchError(error.message);
+                    } else {
+                        setSearchError('Unknown critical error');
+                    }
+                    console.error(error);
+                } finally {
                     setSearchLoading(false);
                 }
             }
@@ -51,5 +56,5 @@ export function useSearchResults() {
         [processDataGenerator],
     );
 
-    return { searchResults, searchLoading, executeSearch };
+    return { searchResults, searchLoading, executeSearch, searchError };
 }

@@ -2,6 +2,8 @@ import { Listing as ListingModel } from '@/types/listings';
 import { ReadableStream } from 'web-streams-polyfill';
 import { GetListingsOptions } from '@/types/requests';
 import { listingQueryUrl } from '@/app/_util/listingQueryUrl';
+import { humanReadableTime } from '@/app/_util/humanReadableTime';
+import { GetListingsError } from '@/app/_util/GetListingsError';
 
 /**
  * Get listings from the marketplace, given a search query and optional filters.
@@ -13,9 +15,25 @@ export async function* getListings(
     options: GetListingsOptions,
 ): AsyncGenerator<ListingModel[]> {
     const response = await fetch(listingQueryUrl(options));
+    if (!response.ok) {
+        if (response.status === 429) {
+            const retryAfter = response.headers.get('Retry-After');
+            if (!retryAfter) {
+                throw new GetListingsError(
+                    'Searched too quickly. ' +
+                        'Please wait a few minutes before searching again.',
+                );
+            }
+            const humanReadableRetryAfter = humanReadableTime(parseInt(retryAfter, 10));
+            throw new GetListingsError(
+                `Searched too quickly. ` +
+                    `Please wait ${humanReadableRetryAfter} before searching again.`,
+            );
+        }
+    }
     const readableStream = response.body as ReadableStream<Uint8Array> | null;
     if (!readableStream) {
-        throw new Error('Failed to fetch listings');
+        throw new GetListingsError('Failed to fetch listings: unknown error');
     }
 
     for await (const listingData of readableStream) {
