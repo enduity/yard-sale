@@ -2,48 +2,46 @@
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'url';
-import path from "node:path";
+import path from 'node:path';
 
 const getDirname = () => {
     const __filename = fileURLToPath(import.meta.url);
     return path.dirname(__filename);
-}
+};
 
 const nextConfig = {
+    experimental: {
+        instrumentationHook: true,
+    },
     webpack: (config, { isServer }) => {
         if (isServer) {
             const require = createRequire(import.meta.url);
-            // Dynamically find the path to the selenium-webdriver package
-            const seleniumWebdriverPath = path.dirname(
-                require.resolve('selenium-webdriver')
-            );
+            // Dynamically find the path to the cycletls package
+            const cycleTlsPath = path.dirname(require.resolve('cycletls'));
+            const executableFilenames = [
+                'index.exe',
+                'index-arm',
+                'index-arm64',
+                'index',
+                'index-mac',
+                'index-mac-arm64',
+                'index-freebsd',
+            ];
 
-            // Construct the path to selenium-manager.exe within the package
-            const seleniumManagerPath = path.join(
-                seleniumWebdriverPath,
-                'bin',
-                process.platform === 'win32' ? 'windows' : process.platform,
-                'selenium-manager' + (process.platform === 'win32' ? '.exe' : '')
-            );
-
-            // Define the destination path where Selenium expects the executable
+            // Define the destination path where CycleTLS expects the executable
             const destinationPath = path.resolve(
                 getDirname(),
-                '.next/server/bin',
-                process.platform === 'win32' ? 'windows' : process.platform,
-                'selenium-manager' + (process.platform === 'win32' ? '.exe' : '')
+                '.next/server/vendor-chunks',
             );
 
             // Add the CopyWebpackPlugin to copy the executable
             config.plugins.push(
                 new CopyWebpackPlugin({
-                    patterns: [
-                        {
-                            from: seleniumManagerPath,
-                            to: destinationPath,
-                        },
-                    ],
-                })
+                    patterns: executableFilenames.map((filename) => ({
+                        from: path.join(cycleTlsPath, filename),
+                        to: path.join(destinationPath, filename),
+                    })),
+                }),
             );
         }
         return config;
