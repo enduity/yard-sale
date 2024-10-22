@@ -19,7 +19,6 @@ export class PopupHandler {
                 );
             } catch (error) {
                 if (error instanceof TimeoutError) {
-                    console.log('"See more" popup not found, continuing');
                     return true;
                 }
                 throw error;
@@ -29,7 +28,6 @@ export class PopupHandler {
             '::-p-xpath(//div[contains(., "See more on Facebook")])',
         );
         if (!seeMorePopup) {
-            console.log('"See more" popup not found, continuing');
             return true;
         }
         const closeButton = await seeMorePopup.$(
@@ -40,7 +38,6 @@ export class PopupHandler {
             return false;
         }
         await closeButton.click();
-        console.log('Closed "See more" popup');
         return true;
     }
 
@@ -52,7 +49,6 @@ export class PopupHandler {
                 });
             } catch (error) {
                 if (error instanceof TimeoutError) {
-                    console.log('Login popup not found, continuing');
                     return;
                 }
                 throw error;
@@ -82,7 +78,6 @@ export class PopupHandler {
             await fixedParent.evaluate((el) => {
                 el.style.display = 'none';
             });
-            console.log('Hid login popup');
         }
     }
 

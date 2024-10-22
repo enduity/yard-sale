@@ -82,7 +82,7 @@ export class ScrollManager {
             } else {
                 console.log(
                     'Requesting more listings, cursor:',
-                    pageInfo.endCursor.slice(0, 20),
+                    pageInfo.endCursor.slice(0, 40),
                 );
                 await new Promise((resolve) =>
                     setTimeout(resolve, 800 + Math.random() * 200),

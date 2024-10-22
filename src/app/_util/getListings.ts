@@ -38,11 +38,9 @@ export async function* getListings(
 
     for await (const listingData of readableStream) {
         const decodedData = new TextDecoder().decode(listingData);
-        console.log(decodedData);
         const jsonStrings = decodedData
             .split(/}(?={)/)
             .map((str, index, arr) => str + (index < arr.length - 1 ? '}' : ''));
-        console.log(jsonStrings);
         const listings = jsonStrings.map((str) => JSON.parse(str));
         yield listings;
     }
