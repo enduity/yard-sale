@@ -4,9 +4,6 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "38000:3000"
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=file:./prisma/prod.db
+      - "3000:3000"
     # Ensure Puppeteer has the necessary capabilities
     shm_size: '1gb'

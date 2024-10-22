@@ -61,6 +61,12 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 ENV CHROMIUM_PATH=/usr/bin/chromium-browser
 
+# Set the Node.js environment to production
+ENV NODE_ENV=production
+
+# Set the default database URL
+ENV DATABASE_URL=file:./prisma/prod.db
+
 # Expose the port that Next.js will run on
 EXPOSE 3000
 
