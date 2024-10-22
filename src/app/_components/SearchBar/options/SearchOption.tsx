@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef } from 'react';
+import { ReactNode } from 'react';
 
 export function SearchOption({
     name,
