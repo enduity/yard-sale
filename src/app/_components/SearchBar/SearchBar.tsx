@@ -9,36 +9,28 @@ import { SearchOptionPill } from '@/app/_components/SearchBar/options/SearchOpti
 import { SearchOption } from '@/app/_components/SearchBar/options/SearchOption';
 import { BulletOption } from '@/app/_components/SearchBar/options/BulletOption';
 import { Condition } from '@/types/search';
+import { usePreviousSearches } from '@/app/_util/usePreviousSearches';
 
 interface SearchBarProps {
-    searchTerm: string;
-    setSearchTerm: (term: string) => void;
-    searchOptions: SearchOptionsState;
-    setSearchOptions: (options: SearchOptionsState) => void;
-    handleSearch: () => void;
-    previousSearches: string[];
-    clearSearchHistory: () => void;
-    showHistoryCleared: boolean;
-    setShowHistoryCleared: (value: boolean) => void;
+    handleSearch: (searchTerm: string, searchOptions: SearchOptionsState) => void;
 }
 
-export function SearchBar({
-    searchTerm,
-    setSearchTerm,
-    searchOptions,
-    setSearchOptions,
-    handleSearch,
-    previousSearches,
-    clearSearchHistory,
-    showHistoryCleared,
-    setShowHistoryCleared,
-}: SearchBarProps) {
+export function SearchBar({ handleSearch }: SearchBarProps) {
     const [showDropdown, setShowDropdown] = useState(false);
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
-
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchOptions, setSearchOptions] = useState<SearchOptionsState>({});
+    const [showHistoryCleared, setShowHistoryCleared] = useState(false);
+    const { previousSearches, updatePreviousSearches, clearSearchHistory } =
+        usePreviousSearches();
     const searchSuggestions = getSuggestions(previousSearches, searchTerm, 5);
 
     const [openedOption, setOpenedOption] = useState('');
+
+    const internalHandleSearch = () => {
+        handleSearch(searchTerm, searchOptions);
+        updatePreviousSearches(searchTerm);
+    };
 
     const SuggestionsDropdown = () => (
         <>
@@ -55,7 +47,7 @@ export function SearchBar({
             </div>
             <div className="grid grid-cols-2 gap-2 p-2">
                 <button
-                    onClick={handleSearch}
+                    onClick={internalHandleSearch}
                     onMouseDown={(e) => e.preventDefault()} // Prevent losing focus
                     className="rounded-md bg-indigo-600 py-3 font-semibold text-white
                         hover:bg-indigo-700"
@@ -83,7 +75,7 @@ export function SearchBar({
                 ) {
                     handleDropdownSelect(searchSuggestions[highlightedIndex]);
                 } else {
-                    handleSearch();
+                    internalHandleSearch();
                 }
                 setShowDropdown(false);
                 break;
@@ -254,7 +246,7 @@ export function SearchBar({
                 </SearchOptionPill>
             </div>
             <button
-                onClick={handleSearch}
+                onClick={internalHandleSearch}
                 className="w-full rounded-lg bg-indigo-600 py-3 font-semibold text-white
                     transition hover:bg-indigo-700"
             >

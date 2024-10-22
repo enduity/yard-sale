@@ -1,26 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { usePreviousSearches } from '@/app/_util/usePreviousSearches';
 import { useSearchResults } from '@/app/_util/useSearchResults';
 import { SearchBar } from '@/app/_components/SearchBar/SearchBar';
 import { SearchResults } from '@/app/_components/SearchResults';
 import { SearchOptionsState } from '@/types/requests';
 
 export default function Home() {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [searchOptions, setSearchOptions] = useState<SearchOptionsState>({});
     const [hasSearched, setHasSearched] = useState(false);
-    const [showHistoryCleared, setShowHistoryCleared] = useState(false);
+    const { searchResults, searchLoading, executeSearch, searchError } =
+        useSearchResults();
 
-    const { previousSearches, updatePreviousSearches, clearSearchHistory } =
-        usePreviousSearches();
-
-    const { searchResults, searchLoading, executeSearch } = useSearchResults();
-
-    const handleSearch = async () => {
+    const handleSearch = async (
+        searchTerm: string,
+        searchOptions: SearchOptionsState,
+    ) => {
         setHasSearched(true);
-        updatePreviousSearches(searchTerm);
         void executeSearch(searchTerm, searchOptions);
     };
 
@@ -30,25 +25,16 @@ export default function Home() {
             <p className="mb-4 text-lg text-gray-600">
                 Find the best deals on used items across different platforms.
             </p>
-            <SearchBar
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                searchOptions={searchOptions}
-                setSearchOptions={setSearchOptions}
-                handleSearch={handleSearch}
-                previousSearches={previousSearches}
-                clearSearchHistory={() => {
-                    clearSearchHistory();
-                    setShowHistoryCleared(true);
-                }}
-                showHistoryCleared={showHistoryCleared}
-                setShowHistoryCleared={setShowHistoryCleared}
-            />
-            <SearchResults
-                hasSearched={hasSearched}
-                searchResults={searchResults}
-                searchLoading={searchLoading}
-            />
+            <SearchBar handleSearch={handleSearch} />
+            <div className="w-full max-w-4xl">
+                {hasSearched && (
+                    <SearchResults
+                        searchResults={searchResults}
+                        searchLoading={searchLoading}
+                        searchError={searchError ?? undefined}
+                    />
+                )}
+            </div>
         </div>
     );
 }
