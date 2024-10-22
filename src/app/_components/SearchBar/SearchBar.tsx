@@ -171,6 +171,7 @@ export function SearchBar({
                             ? setOpenedOption('')
                             : setOpenedOption('Condition')
                     }
+                    onClose={() => setOpenedOption('')}
                 >
                     <SearchOption name="Condition" onClose={() => setOpenedOption('')}>
                         <BulletOption
@@ -221,6 +222,7 @@ export function SearchBar({
                             ? setOpenedOption('')
                             : setOpenedOption('Listed')
                     }
+                    onClose={() => setOpenedOption('')}
                 >
                     <SearchOption name="Listed" onClose={() => setOpenedOption('')}>
                         <BulletOption
