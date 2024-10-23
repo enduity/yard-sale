@@ -28,6 +28,7 @@
     "puppeteer": "^23.5.3",
     "react": "^18",
     "react-dom": "^18",
+    "sharp": "^0.33.5",
     "socks-proxy-agent": "^8.0.4",
     "sqlite3": "^5.1.7",
     "web-streams-polyfill": "^4.0.0"
