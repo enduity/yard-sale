@@ -24,6 +24,7 @@ export function Listing({ listing }: { listing: ListingModel }) {
                     alt={listing.title}
                     className="object-cover"
                     fill={true}
+                    sizes="(max-width: 768px) 86vw, (max-width: 1200px) 42vw, 17vw"
                 />
             </div>
             <div className="flex flex-grow flex-col">
