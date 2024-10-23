@@ -90,12 +90,13 @@ const handleSpawn = (
     port: number,
     filePath?: string,
 ) => {
+    const isWin = process.platform === 'win32';
     const execPath = filePath ?? path.join(__dirname, fileName);
     const dirname = path.dirname(execPath);
     const basename = path.basename(execPath);
 
-    child = spawn(basename, [], {
-        cwd: dirname,
+    child = spawn(isWin ? basename : execPath, [], {
+        cwd: isWin ? dirname : undefined,
         env: { ...process.env, WS_PORT: port.toString() },
         shell: false,
         windowsHide: true,
