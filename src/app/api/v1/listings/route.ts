@@ -78,9 +78,14 @@ export async function GET(req: NextRequest) {
     })();
 
     const streamGenerator = (async function* () {
+        let count = 0;
         for await (const listing of generator) {
+            if (count >= 200) {
+                break;
+            }
             const listingData = new TextEncoder().encode(JSON.stringify(listing));
             yield listingData;
+            count++;
         }
     })();
 

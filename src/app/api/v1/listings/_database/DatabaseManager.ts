@@ -1,8 +1,10 @@
 import { prisma } from '@/lib/prisma';
-import { axiosInstance } from '@/lib/axiosInstance';
 import { Listing, ListingData, ListingSource } from '@/types/listings';
 import { Prisma } from '@prisma/client';
 import { SearchCriteria } from '@/types/search';
+import { fetchWithCycleTLS } from '@/lib/CycleTLS/fetchWithCycleTLS';
+import { getCycleTLS } from '@/lib/CycleTLS/getCycleTLS';
+import ProxyManager from '@/lib/ProxyManager';
 
 export class DatabaseManager {
     private static readonly STALE_SEARCH_MS = 60 * 60 * 1000;
@@ -39,7 +41,10 @@ export class DatabaseManager {
         source: ListingSource,
         searchCriteria?: SearchCriteria,
     ): Promise<Listing> {
-        const imageBuffer = await this.bufferFromImageUrl(listingData.thumbnailSrc);
+        const imageBuffer = await this.bufferFromImageUrl(
+            listingData.thumbnailSrc,
+            source === ListingSource.Marketplace,
+        );
 
         // First, add the search term (if it doesn't exist)
         const search = await this.addOrGetSearch(searchQuery, searchCriteria);
@@ -171,22 +176,58 @@ export class DatabaseManager {
         }
     }
 
-    private static async bufferFromImageUrl(url: string): Promise<Buffer | null> {
+    private static async bufferFromImageUrl(
+        url: string,
+        useCycleTLS?: boolean,
+    ): Promise<Buffer | null> {
         try {
-            const response = await axiosInstance.get(url, {
-                responseType: 'arraybuffer',
-                timeout: 5000,
-                'axios-retry': {
-                    retries: 3,
-                },
-            });
-            return Buffer.from(response.data);
+            // Even if useCycleTLS is true, we try fetching first as it is faster
+            const maxRetries = useCycleTLS ? 1 : 3;
+            let buffer: Buffer | null = null;
+            let response;
+            try {
+                response = await ProxyManager.fetch(
+                    url,
+                    {
+                        headers: {
+                            'User-Agent':
+                                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+                        },
+                    },
+                    {
+                        blockProxyOnError: false,
+                        maxAttempts: maxRetries,
+                    },
+                );
+                const arrayBuffer = await response!.arrayBuffer();
+                buffer = Buffer.from(arrayBuffer);
+            } catch (error) {
+                if (!useCycleTLS) {
+                    console.error(
+                        `Failed to fetch image buffer for ${url} with error: ${error}`,
+                    );
+                }
+            }
+            if (useCycleTLS) {
+                const cycleTLS = await getCycleTLS();
+                const response = await fetchWithCycleTLS(cycleTLS, url);
+                if (!response || typeof response.body === 'object') {
+                    console.error(`Failed to fetch image buffer for ${url}`);
+                    return null;
+                }
+                buffer = Buffer.from(response.body, 'base64');
+            }
+            if (!buffer) {
+                console.error(`Failed to fetch image buffer for ${url}`);
+                return null;
+            }
+            return buffer;
         } catch (error) {
             if (error instanceof TypeError) {
                 // The image URL is invalid
                 return null;
             }
-            console.error('Failed to fetch the buffer:', error);
+            console.error(`Error fetching image buffer for ${url}: ${error}`);
             return null;
         }
     }

@@ -12,6 +12,7 @@ interface.
   initial load times.
 - **Filtering**: Supports filtering listings by item condition (new or used) and a maximum number of days listed.
 - **Caching Mechanism**: Implements a caching layer to improve query performance and reduce redundant scraping.
+- **Proxy Handling**: Automatically rotates proxies given in an array, detects blocked IPs, and retries requests.
 
 ## Tech Stack
 
@@ -109,7 +110,11 @@ The default `.env` file includes:
 DATABASE_URL="file:./dev.db"   # Relative to the 'prisma' directory
 ```
 
-You can customize this if you need a different database path or environment setup.
+To use proxies, configure the `YARD_SALE_PROXIES` environment variable with a comma-separated list of proxy URLs:
+
+```bash
+YARD_SALE_PROXIES="http://user:pass@host:port,socks5://user:pass@host:port"
+```
 
 ## Scripts
 

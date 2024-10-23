@@ -14,6 +14,9 @@ importers:
       '@types/jsdom':
         specifier: ^21.1.7
         version: 21.1.7
+      '@types/ws':
+        specifier: ^8.5.12
+        version: 8.5.12
       axios:
         specifier: ^1.7.7
         version: 1.7.7
@@ -32,15 +35,27 @@ importers:
       fastest-levenshtein:
         specifier: ^1.0.16
         version: 1.0.16
+      form-data:
+        specifier: ^4.0.1
+        version: 4.0.1
+      https-proxy-agent:
+        specifier: ^7.0.5
+        version: 7.0.5
       jsdom:
         specifier: ^25.0.1
         version: 25.0.1(bufferutil@4.0.8)
       next:
         specifier: 14.2.14
         version: 14.2.14(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      node-fetch:
+        specifier: ^3.3.2
+        version: 3.3.2
       prisma:
         specifier: ^5.20.0
         version: 5.20.0
+      proxy-chain:
+        specifier: ^2.5.4
+        version: 2.5.4
       puppeteer:
         specifier: ^23.5.3
         version: 23.5.3(bufferutil@4.0.8)(typescript@5.6.2)
@@ -50,6 +65,9 @@ importers:
       react-dom:
         specifier: ^18
         version: 18.3.1(react@18.3.1)
+      socks-proxy-agent:
+        specifier: ^8.0.4
+        version: 8.0.4
       sqlite3:
         specifier: ^5.1.7
         version: 5.1.7
@@ -64,6 +82,9 @@ importers:
       '@types/node':
         specifier: ^20
         version: 20.16.10
+      '@types/node-fetch':
+        specifier: ^2.6.11
+        version: 2.6.11
       '@types/react':
         specifier: ^18
         version: 18.3.11
@@ -336,6 +357,9 @@ packages:
   '@types/json5@0.0.29':
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
 
+  '@types/node-fetch@2.6.11':
+    resolution: {integrity: sha512-24xFj9R5+rfQJLRyM56qh+wnVSYhyXC2tkoBndtY0U+vubqNsYXGjufB2nn8Q6gt0LrARwL6UBtMCSVCwl4B1g==}
+
   '@types/node@17.0.45':
     resolution: {integrity: sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==}
 
@@ -353,6 +377,9 @@ packages:
 
   '@types/tough-cookie@4.0.5':
     resolution: {integrity: sha512-/Ad8+nIOV7Rl++6f1BdKxFSMgmoqEoYbHRpPcx3JEfv8VRsQe9Z4mCXeJBzxs7mbHY/XOZZuXlRNfhpVPbs6ZA==}
+
+  '@types/ws@8.5.12':
+    resolution: {integrity: sha512-3tPRkv1EtkDpzlgyKyI8pGsGZAGPEaXeu0DOj5DI25Ja91bdAYddYHbADRYVrZMRbfW+1l5YwXVDKohDJNQxkQ==}
 
   '@types/yauzl@2.10.3':
     resolution: {integrity: sha512-oJoftv0LSuaDZE3Le4DbKX+KS9G36NzOeSap90UIK0yMA/NhKJhqlSGtNDORNRaIbQfzjXDrQa0ytJ6mNRGz/Q==}
@@ -857,6 +884,10 @@ packages:
   damerau-levenshtein@1.0.8:
     resolution: {integrity: sha512-sdQSFB7+llfUcQHUQO3+B8ERRj0Oa4w9POWMI/puGtuf7gFywGmkaLCElnudfTiKZV+NvHqL0ifzdrI8Ro7ESA==}
 
+  data-uri-to-buffer@4.0.1:
+    resolution: {integrity: sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==}
+    engines: {node: '>= 12'}
+
   data-uri-to-buffer@6.0.2:
     resolution: {integrity: sha512-7hvf7/GW8e86rW0ptuwS3OcBGDjIi6SZva7hCyWC0yYry2cOPmLIjXAUHI6DK2HsnwJd9ifmt57i8eV2n4YNpw==}
     engines: {node: '>= 14'}
@@ -1231,6 +1262,10 @@ packages:
   fd-slicer@1.1.0:
     resolution: {integrity: sha512-cE1qsB/VwyQozZ+q1dGxR8LBYNZeofhEdUNGSMbQD3Gw2lAzX9Zb3uIU6Ebc/Fmyjo9AWWfnn0AUCHqtevs/8g==}
 
+  fetch-blob@3.2.0:
+    resolution: {integrity: sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ==}
+    engines: {node: ^12.20 || >= 14.13}
+
   file-entry-cache@6.0.1:
     resolution: {integrity: sha512-7Gps/XWymbLk2QLYK4NzpMOrYjMhdIxXuIvy2QBsLE6ljuodKvdkWs/cpyJJ3CVIVpH0Oi1Hvg1ovbMzLdFBBg==}
     engines: {node: ^10.12.0 || >=12.0.0}
@@ -1272,6 +1307,10 @@ packages:
   form-data@4.0.1:
     resolution: {integrity: sha512-tzN8e4TX8+kkxGPK8D5u0FNmjPUjw3lwC9lSLxxoB/+GtsJG91CO8bSWy73APlgAZzZbXEYZJuxjkHH2w+Ezhw==}
     engines: {node: '>= 6'}
+
+  formdata-polyfill@4.0.10:
+    resolution: {integrity: sha512-buewHzMvYL29jdeQTVILecSaZKnt/RJWjoZCF5OW60Z67/GmSLBkOFM7qh1PI3zFNtJbaZL5eQu1vLfazOwj4g==}
+    engines: {node: '>=12.20.0'}
 
   fs-constants@1.0.0:
     resolution: {integrity: sha512-y6OAwoSIf7FyjMIv94u+b5rdheZEjzR63GTyZJm5qh4Bi+2YgwLCcI/fPFZkL5PSixOt6ZNKm+w+Hfp/Bciwow==}
@@ -1870,6 +1909,14 @@ packages:
   node-addon-api@7.1.1:
     resolution: {integrity: sha512-5m3bsyrjFWE1xf7nz7YXdN4udnVtXK6/Yfgn5qnahL6bCkf2yKt4k3nuTKAtT4r3IG8JNR2ncsIMdZuAzJjHQQ==}
 
+  node-domexception@1.0.0:
+    resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
+    engines: {node: '>=10.5.0'}
+
+  node-fetch@3.3.2:
+    resolution: {integrity: sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+
   node-gyp-build@4.8.2:
     resolution: {integrity: sha512-IRUxE4BVsHWXkV/SFOut4qTlagw2aM8T5/vnTsmrHJvVoKueJHRc/JaFND7QDDc61kLYUJ6qlZM3sqTSyx2dTw==}
     hasBin: true
@@ -2194,6 +2241,10 @@ packages:
   proxy-agent@6.4.0:
     resolution: {integrity: sha512-u0piLU+nCOHMgGjRbimiXmA9kM/L9EHh3zL81xCdp7m+Y2pHIsnmbdDoEDoAz5geaonNR6q6+yOPQs6n4T6sBQ==}
     engines: {node: '>= 14'}
+
+  proxy-chain@2.5.4:
+    resolution: {integrity: sha512-Tsdqbo3fyteHO3dHtxcBE6uKlhg4sO2qtDxmiM805l3O08R6zRbGTeIDbW1ksSv/n4xPQ3B0YiK+KZ2D9YIfBA==}
+    engines: {node: '>=14'}
 
   proxy-from-env@1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
@@ -2700,6 +2751,10 @@ packages:
     resolution: {integrity: sha512-TnbFSbcOCcDgjZ4piURLCbJ3nJhznVh9kw6F6iokjiFPl8ONxe9A6nMDVXDiNbrSfLILs6vB07F7wLBrwPYzJw==}
     engines: {node: '>=10.13.0'}
 
+  web-streams-polyfill@3.3.3:
+    resolution: {integrity: sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==}
+    engines: {node: '>= 8'}
+
   web-streams-polyfill@4.0.0:
     resolution: {integrity: sha512-0zJXHRAYEjM2tUfZ2DiSOHAa2aw1tisnnhU3ufD57R8iefL+DcdJyRBRyJpG+NUimDgbTI/lH+gAE1PAvV3Cgw==}
     engines: {node: '>= 8'}
@@ -3050,6 +3105,11 @@ snapshots:
 
   '@types/json5@0.0.29': {}
 
+  '@types/node-fetch@2.6.11':
+    dependencies:
+      '@types/node': 20.16.10
+      form-data: 4.0.1
+
   '@types/node@17.0.45': {}
 
   '@types/node@20.16.10':
@@ -3068,6 +3128,10 @@ snapshots:
       csstype: 3.1.3
 
   '@types/tough-cookie@4.0.5': {}
+
+  '@types/ws@8.5.12':
+    dependencies:
+      '@types/node': 20.16.10
 
   '@types/yauzl@2.10.3':
     dependencies:
@@ -3712,6 +3776,8 @@ snapshots:
 
   damerau-levenshtein@1.0.8: {}
 
+  data-uri-to-buffer@4.0.1: {}
+
   data-uri-to-buffer@6.0.2: {}
 
   data-urls@5.0.0:
@@ -4249,6 +4315,11 @@ snapshots:
     dependencies:
       pend: 1.2.0
 
+  fetch-blob@3.2.0:
+    dependencies:
+      node-domexception: 1.0.0
+      web-streams-polyfill: 3.3.3
+
   file-entry-cache@6.0.1:
     dependencies:
       flat-cache: 3.2.0
@@ -4288,6 +4359,10 @@ snapshots:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       mime-types: 2.1.35
+
+  formdata-polyfill@4.0.10:
+    dependencies:
+      fetch-blob: 3.2.0
 
   fs-constants@1.0.0: {}
 
@@ -4945,6 +5020,14 @@ snapshots:
 
   node-addon-api@7.1.1: {}
 
+  node-domexception@1.0.0: {}
+
+  node-fetch@3.3.2:
+    dependencies:
+      data-uri-to-buffer: 4.0.1
+      fetch-blob: 3.2.0
+      formdata-polyfill: 4.0.10
+
   node-gyp-build@4.8.2:
     optional: true
 
@@ -5238,6 +5321,14 @@ snapshots:
       pac-proxy-agent: 7.0.2
       proxy-from-env: 1.1.0
       socks-proxy-agent: 8.0.4
+    transitivePeerDependencies:
+      - supports-color
+
+  proxy-chain@2.5.4:
+    dependencies:
+      socks: 2.8.3
+      socks-proxy-agent: 8.0.4
+      tslib: 2.7.0
     transitivePeerDependencies:
       - supports-color
 
@@ -5864,6 +5955,8 @@ snapshots:
     dependencies:
       glob-to-regexp: 0.4.1
       graceful-fs: 4.2.11
+
+  web-streams-polyfill@3.3.3: {}
 
   web-streams-polyfill@4.0.0: {}
 

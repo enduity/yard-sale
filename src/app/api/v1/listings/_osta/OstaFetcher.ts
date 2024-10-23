@@ -1,5 +1,5 @@
 import { ListingDataWithDate, ListingSource } from '@/types/listings';
-import { fetchWithCycleTLS } from '@/app/api/v1/listings/_common/fetchWithCycleTLS';
+import { fetchWithCycleTLS } from '@/lib/CycleTLS/fetchWithCycleTLS';
 import { BaseScraper } from '@/app/api/v1/listings/_common/BaseScraper';
 import { Condition, SearchCriteria } from '@/types/search';
 import { CycleTLSClient } from 'cycletls';
@@ -86,13 +86,19 @@ export class OstaFetcher extends BaseScraper {
 
         while (hasNextPage) {
             const url = this.craftQueryURL(currentPage);
-            const response = await fetchWithCycleTLS(cycleTLS, url, '');
-            if (!response.body || typeof response.body !== 'object') {
-                throw new Error('Invalid response body');
+            const response = await fetchWithCycleTLS(cycleTLS, url);
+            if (!response?.body || typeof response.body !== 'object') {
+                console.error('Invalid response body from osta.ee');
+                break;
             }
-            const data = response.body;
+            const data = response.body as unknown as [
+                {
+                    items: OstaJsonListing[];
+                    total: number;
+                },
+            ];
             const items: OstaJsonListing[] = data[0]?.items;
-            const total = data[0]?.total;
+            const total = data[0]?.total <= 1000 ? data[0]?.total : 1000;
 
             for (const item of items) {
                 if (foundListingIds.has(item.id)) {
@@ -130,6 +136,9 @@ export class OstaFetcher extends BaseScraper {
             } else {
                 currentPage++;
             }
+
+            // Courtesy delay to avoid rate limiting
+            await new Promise((resolve) => setTimeout(resolve, 100));
         }
     }
 }

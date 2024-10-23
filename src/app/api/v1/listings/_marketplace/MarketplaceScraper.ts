@@ -7,7 +7,6 @@ import {
     MarketplaceScraperOptions,
 } from '@/types/marketplace';
 import { urlGenerator } from '@/app/api/v1/listings/_marketplace/urlGenerator';
-import { axiosInstance } from '@/lib/axiosInstance';
 import { JSDOM } from 'jsdom';
 import {
     JsonProcessor,
@@ -19,6 +18,17 @@ import { PopupHandler } from '@/app/api/v1/listings/_marketplace/PopupHandler';
 import { DatabaseManager } from '@/app/api/v1/listings/_database/DatabaseManager';
 import { QueueManager } from '@/app/api/v1/listings/_database/QueueManager';
 import { Condition, SearchCriteria } from '@/types/search';
+import { CycleTLSClient } from 'cycletls';
+import { fetchWithCycleTLS } from '@/lib/CycleTLS/fetchWithCycleTLS';
+import { getCycleTLS } from '@/lib/CycleTLS/getCycleTLS';
+import ProxyManager from '@/lib/ProxyManager';
+
+class ProxyBlockedError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'ProxyBlockedError';
+    }
+}
 
 export class MarketplaceScraper {
     private browser?: Browser;
@@ -27,6 +37,7 @@ export class MarketplaceScraper {
     private processId?: number;
     private readonly options: MarketplaceScraperOptions;
     private readonly requestOptions: MarketplaceOptions;
+    private cycleTLS?: CycleTLSClient | null;
 
     private constructor(
         query: string,
@@ -53,6 +64,7 @@ export class MarketplaceScraper {
     ): Promise<MarketplaceScraper> {
         const scraper = new MarketplaceScraper(query, searchCriteria, options);
         scraper.processId = await QueueManager.addToQueue(query, searchCriteria);
+        scraper.cycleTLS = await getCycleTLS();
         return scraper;
     }
 
@@ -88,15 +100,15 @@ export class MarketplaceScraper {
     private async fetchFirstListings(): Promise<ListingData[]> {
         const url = urlGenerator(this.requestOptions);
 
-        const response = await axiosInstance.get(url, {
-            headers: {
-                'User-Agent':
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
-                Accept: 'text/html',
-                'Sec-Fetch-Mode': 'navigate',
-            },
+        const response = await fetchWithCycleTLS(this.cycleTLS!, url, {
+            Accept: 'text/html',
+            'Accept-Language': 'en,en-GB;q=0.9',
+            'Sec-Fetch-Mode': 'navigate',
         });
-        const htmlContent = response.data;
+        if (!response?.body) {
+            throw new Error('Invalid response body');
+        }
+        const htmlContent = response.body.toString();
 
         const dom = new JSDOM(htmlContent);
         const scriptTags = dom.window.document.querySelectorAll(
@@ -122,6 +134,14 @@ export class MarketplaceScraper {
     }
 
     private async *handlePage(page: Page): AsyncGenerator<ListingData> {
+        // Check if the page contains "You must log in to continue"
+        const failTextXPath = '//div[text()[contains(., "You must log in to continue")]]';
+        const failText = await page.$(`::-p-xpath(${failTextXPath})`);
+        if (failText) {
+            console.error('IP is blocked, login required');
+            throw new ProxyBlockedError('Proxy blocked due to login requirement');
+        }
+
         const scrollManager = new ScrollManager(page);
         const popupHandler = new PopupHandler(page);
 
@@ -230,16 +250,38 @@ export class MarketplaceScraper {
         searchQuery: string,
         searchCriteria?: SearchCriteria,
     ): AsyncGenerator<Listing> {
-        for await (const listingData of this.scrape()) {
-            if (isInPreviousOutput(listingData)) {
-                continue;
+        try {
+            for await (const listingData of this.scrape()) {
+                if (isInPreviousOutput(listingData)) {
+                    continue;
+                }
+                yield await DatabaseManager.addListing(
+                    listingData,
+                    searchQuery,
+                    ListingSource.Marketplace,
+                    searchCriteria,
+                );
             }
-            yield await DatabaseManager.addListing(
-                listingData,
-                searchQuery,
-                ListingSource.Marketplace,
-                searchCriteria,
-            );
+        } catch (error) {
+            if (
+                error instanceof ProxyBlockedError &&
+                ProxyManager.getRandomUnblockedProxyUrl()
+            ) {
+                console.error('Proxy blocked, trying with new proxy');
+                if (this.browser) {
+                    await this.browser.close();
+                }
+                this.browser = new Browser();
+                yield* this.scraperGeneratorWithCache(
+                    isInPreviousOutput,
+                    searchQuery,
+                    searchCriteria,
+                );
+            } else if (error instanceof ProxyBlockedError) {
+                throw new Error('All proxies are blocked');
+            } else {
+                throw error;
+            }
         }
     }
 }
