@@ -9,8 +9,10 @@ type RateLimitRequest = {
 };
 const rateLimitRequests: RateLimitRequest[] = [];
 const RATE_LIMITS = {
-    '/api/v1/listings': { limit: 5, window: 5 * 60 * 1000 }, // 5 requests per 5 minutes
-    '/api/v1/thumbnails': { limit: 100, window: 60 * 1000 }, // 100 requests per minute
+    // 5 requests per 5 minutes per userAgent+IP, 10 requests per 5 minutes per IP
+    '/api/v1/listings': { limit: 5, ipLimit: 10, window: 5 * 60 * 1000 },
+    // 100 requests per minute per userAgent+IP, 200 requests per minute per IP
+    '/api/v1/thumbnails': { limit: 100, ipLimit: 200, window: 60 * 1000 },
 };
 const EXPIRATION_TIME =
     Object.entries(RATE_LIMITS).reduce(
@@ -29,9 +31,10 @@ function calculateRetryAfter(
         pathname.startsWith(key),
     );
     if (!rateLimitConfig) return null;
-    const { limit, window } = rateLimitConfig[1];
+    const { limit, ipLimit, window } = rateLimitConfig[1];
 
-    const requests = rateLimitRequests.filter(
+    // Check requests for userAgent + IP limit
+    const userAgentRequests = rateLimitRequests.filter(
         (request) =>
             request.ip === ip &&
             request.userAgent === userAgent &&
@@ -39,11 +42,28 @@ function calculateRetryAfter(
             request.time.getTime() > now - window,
     );
 
-    const overLimit = requests.length - limit;
-    if (overLimit <= 0) return 0;
+    const overUserAgentLimit = userAgentRequests.length - limit;
+    if (overUserAgentLimit > 0) {
+        const earliestRetryTime =
+            userAgentRequests[overUserAgentLimit].time.getTime() + window;
+        return Math.ceil((earliestRetryTime - now) / 1000);
+    }
 
-    const earliestRetryTime = requests[overLimit].time.getTime() + window;
-    return Math.ceil((earliestRetryTime - now) / 1000);
+    // Check requests for IP-only limit
+    const ipRequests = rateLimitRequests.filter(
+        (request) =>
+            request.ip === ip &&
+            request.pathname === pathname &&
+            request.time.getTime() > now - window,
+    );
+
+    const overIpLimit = ipRequests.length - ipLimit;
+    if (overIpLimit > 0) {
+        const earliestRetryTime = ipRequests[overIpLimit].time.getTime() + window;
+        return Math.ceil((earliestRetryTime - now) / 1000);
+    }
+
+    return 0; // No limit exceeded
 }
 
 export async function middleware(request: NextRequest) {
