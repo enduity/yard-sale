@@ -16,7 +16,7 @@ export class OkidokiScraper extends BaseScraper {
             [key: string]: string;
         } = {
             query: this.query,
-            p: String(page),
+            p: page > 1 ? String(page) : '',
         };
 
         const condition = this.searchCriteria?.condition;
@@ -27,6 +27,12 @@ export class OkidokiScraper extends BaseScraper {
         }
 
         url.search = Object.keys(queryParams)
+            /**
+             * Filtering p=1 is necessary, because Okidoki redirects if the page is 1
+             * This redirect gives a broken Location URL with double-encoded query params
+             * This is a workaround to prevent the redirect
+             */
+            .filter((key) => queryParams[key].length)
             .map((key) => {
                 const encodedKey = encodeURIComponent(key);
                 const encodedValue = encodeURIComponent(queryParams[key]);
