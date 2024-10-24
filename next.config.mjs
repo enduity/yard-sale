@@ -5,11 +5,41 @@ import { PHASE_DEVELOPMENT_SERVER, PHASE_PRODUCTION_BUILD } from 'next/constants
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'url';
 import path from 'node:path';
+import { globSync } from 'glob';
+import * as fs from 'node:fs';
 
 const getDirname = () => {
     const __filename = fileURLToPath(import.meta.url);
     return path.dirname(__filename);
 };
+
+/**
+ * A Webpack plugin to make specified files or directories executable after the emit stage.
+ *
+ * @class ExecutablePlugin
+ * @param {Object} options - The plugin options.
+ * @param {string} options.path - The path or glob pattern to the files or directory to make executable.
+ */
+class ExecutablePlugin {
+    constructor({ path } = {}) {
+        if (!path) throw new Error('The path option is required.');
+        this.path = path;
+    }
+    apply(compiler) {
+        compiler.hooks.afterEmit.tap('PermissionsPlugin', () => {
+            if (process.platform === 'win32') return;
+            for (const file of globSync(this.path)) {
+                try {
+                    const { mode } = fs.statSync(file);
+                    const newMode = mode | 0o110;
+                    if (mode !== newMode) fs.chmodSync(file, newMode);
+                } catch (err) {
+                    console.error(`Error processing file: ${file}`, err);
+                }
+            }
+        });
+    }
+}
 
 const nextConfig = (phase) => {
     const isDevelopment = phase === PHASE_DEVELOPMENT_SERVER;
@@ -41,6 +71,11 @@ const nextConfig = (phase) => {
                     '.next/server/cycletls',
                 );
 
+                config.plugins.push(
+                    new ExecutablePlugin({
+                        path: `${destinationPath}/index*`,
+                    }),
+                );
                 // Add the CopyWebpackPlugin to copy the executable
                 config.plugins.push(
                     new CopyWebpackPlugin({
