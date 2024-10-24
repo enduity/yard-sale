@@ -19,12 +19,16 @@ const EXPIRATION_TIME =
     ) +
     5 * 60 * 1000; // 5 minutes after the longest window
 
-function calculateRetryAfter(ip: string, userAgent: string, pathname: string) {
+function calculateRetryAfter(
+    ip: string,
+    userAgent: string,
+    pathname: string,
+): number | null {
     const now = Date.now();
     const rateLimitConfig = Object.entries(RATE_LIMITS).find(([key]) =>
         pathname.startsWith(key),
     );
-    if (!rateLimitConfig) return NextResponse.next(); // If no specific rate limit, proceed normally
+    if (!rateLimitConfig) return null;
     const { limit, window } = rateLimitConfig[1];
 
     const requests = rateLimitRequests.filter(
@@ -65,6 +69,8 @@ export async function middleware(request: NextRequest) {
             status: 429,
             headers: { 'Retry-After': String(retryAfter) },
         });
+    } else if (retryAfter === null) {
+        return NextResponse.next();
     }
 
     // Remove expired requests to prevent infinite growth of memory usage
