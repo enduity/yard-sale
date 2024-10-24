@@ -23,7 +23,6 @@ export function getCycleTLS(): Promise<CycleTLSClient> {
             console.info(`CycleTLS using proxy: ${global.proxy}`);
         }
         global.cycleTLSPromise = initCycleTLS({
-            port: 50141,
             executablePath,
         });
 

@@ -145,11 +145,11 @@ async function streamToString(stream: Readable): Promise<string> {
 class Golang extends EventEmitter {
     server: WebSocket | null = null;
     queue: Array<string> = [];
-    host: boolean = false;
+    isHost: boolean = false;
     queueId: NodeJS.Timeout | null = null;
 
     private readonly timeout: number;
-    private readonly port: number;
+    private port: number;
     private readonly debug: boolean;
     private readonly filePath?: string;
     private failedInitialization: boolean = false;
@@ -162,25 +162,33 @@ class Golang extends EventEmitter {
         this.timeout = timeout;
         this.filePath = filePath;
 
-        this.checkSpawnedInstance();
+        this.spawnOrUseExisting();
     }
 
-    checkSpawnedInstance() {
+    spawnOrUseExisting() {
         const server = http.createServer();
-
-        server
-            .listen(this.port)
+        const listen = server.listen(this.port);
+        listen
             .on('listening', () => {
+                if (this.port === 0) {
+                    if (server.address() && typeof server.address() === 'object') {
+                        this.port = (server.address() as { port: number }).port;
+                    } else {
+                        throw new Error('CycleTLS failed to get OS-assigned port');
+                    }
+                }
                 server.close(() => {
                     this.spawnServer();
-                    this.host = true;
+                    this.isHost = true;
                 });
             })
             .on('error', (error) => {
-                console.error(`Failed to start server on port ${this.port} - ${error}`);
-                console.log('Attempting to connect to existing server');
+                console.error(
+                    `CycleTLS failed to start server on port ${this.port} - ${error}`,
+                );
+                console.log('CycleTLS attempting to connect to existing server');
                 this.createClient();
-                this.host = false;
+                this.isHost = false;
             });
     }
 
@@ -292,7 +300,7 @@ class Golang extends EventEmitter {
                         this.request(requestId, options);
 
                         // Start process of client re-creation
-                        this.checkSpawnedInstance();
+                        this.spawnOrUseExisting();
                     } else {
                         // Add to queue and hope server restarts properly
                         this.queue.push(JSON.stringify({ requestId, options }));
@@ -330,7 +338,7 @@ class Golang extends EventEmitter {
         return new Promise((resolve) => {
             console.log('Exiting CycleTLS');
             this.server?.close();
-            if (this.host) {
+            if (this.isHost) {
                 child?.kill();
                 resolve(undefined);
             } else {
@@ -389,7 +397,7 @@ const initCycleTLS = async (
         let { port, debug, timeout } = initOptions;
         const { executablePath } = initOptions;
 
-        if (!port) port = 9119;
+        if (!port) port = 0;
         if (!debug) debug = false;
         if (!timeout) timeout = 4000;
 
