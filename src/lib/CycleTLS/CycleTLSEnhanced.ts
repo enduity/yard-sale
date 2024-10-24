@@ -176,7 +176,9 @@ class Golang extends EventEmitter {
                     this.host = true;
                 });
             })
-            .on('error', () => {
+            .on('error', (error) => {
+                console.error(`Failed to start server on port ${this.port} - ${error}`);
+                console.log('Attempting to connect to existing server');
                 this.createClient();
                 this.host = false;
             });
