@@ -18,10 +18,9 @@ import { PopupHandler } from '@/app/api/v1/listings/_marketplace/PopupHandler';
 import { DatabaseManager } from '@/app/api/v1/listings/_database/DatabaseManager';
 import { QueueManager } from '@/app/api/v1/listings/_database/QueueManager';
 import { Condition, SearchCriteria } from '@/types/search';
-import { CycleTLSClient } from 'cycletls';
-import { fetchWithCycleTLS } from '@/lib/CycleTLS/fetchWithCycleTLS';
 import { getCycleTLS } from '@/lib/CycleTLS/getCycleTLS';
 import ProxyManager from '@/lib/ProxyManager';
+import { CycleTLSRequestOptions, CycleTLSClient } from '@/lib/CycleTLS/CycleTLSEnhanced';
 
 class ProxyBlockedError extends Error {
     constructor(message: string) {
@@ -100,15 +99,29 @@ export class MarketplaceScraper {
     private async fetchFirstListings(): Promise<ListingData[]> {
         const url = urlGenerator(this.requestOptions);
 
-        const response = await fetchWithCycleTLS(this.cycleTLS!, url, {
-            Accept: 'text/html',
-            'Accept-Language': 'en,en-GB;q=0.9',
-            'Sec-Fetch-Mode': 'navigate',
-        });
+        const cycleTLSOptions: CycleTLSRequestOptions = {
+            ja3: '771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,10-51-0-11-35-5-16-27-65281-45-23-43-17513-18-65037-13,25497-29-23-24,0',
+            userAgent:
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+            headers: {
+                Accept: 'text/html',
+                'Accept-Language': 'en,en-GB;q=0.9',
+                'Sec-Fetch-Mode': 'navigate',
+            },
+        };
+        proxy = ProxyManager.getRandomUnblockedProxyUrl() ?? undefined;
+        cycleTLSOptions.proxy = proxy;
+        const response = await this.cycleTLS!(url, cycleTLSOptions, 'get');
         if (!response?.body) {
             throw new Error('Invalid response body');
         }
         const htmlContent = response.body.toString();
+        if (proxy && htmlContent.includes('You must log in to continue')) {
+            if (ProxyManager.blockProxy(proxy)) {
+                return this.fetchFirstListings();
+            }
+            throw new ProxyBlockedError('Last proxy blocked due to login requirement');
+        }
 
         const dom = new JSDOM(htmlContent);
         const scriptTags = dom.window.document.querySelectorAll(
