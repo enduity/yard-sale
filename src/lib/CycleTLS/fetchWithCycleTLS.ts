@@ -21,6 +21,7 @@ export async function fetchWithCycleTLS(
         headers: extraHeaders,
     };
     proxy = ProxyManager.getRandomUnblockedProxyUrl() ?? undefined;
+    cycleTLSOptions.proxy = proxy;
 
     for (let attempt = 1; attempt <= 3; attempt++) {
         try {
