@@ -20,6 +20,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
 # Copy the rest of the source code
@@ -57,7 +58,7 @@ COPY --from=builder /app/.env ./.env
 RUN chmod +x .next/server/cycletls/index*
 
 # Set environment variables for Puppeteer
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 ENV CHROMIUM_PATH=/usr/bin/chromium-browser
 

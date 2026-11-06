@@ -2,10 +2,11 @@ import puppeteer, {
     Browser as BrowserType,
     GoToOptions,
     Page,
-    PuppeteerLaunchOptions,
 } from 'puppeteer';
 import { anonymizeProxy } from 'proxy-chain';
 import ProxyManager from '@/lib/ProxyManager';
+
+type BrowserLaunchOptions = NonNullable<Parameters<typeof puppeteer.launch>[0]>;
 
 export class Browser {
     private browser!: Promise<BrowserType>;
@@ -22,7 +23,7 @@ export class Browser {
 
     private init() {
         const env = process.env.NODE_ENV;
-        let options: PuppeteerLaunchOptions = {
+        let options: BrowserLaunchOptions = {
             headless: false,
             slowMo: 50,
             devtools: true,
@@ -63,7 +64,7 @@ export class Browser {
         slowMo,
         devtools,
         executablePath,
-    }: PuppeteerLaunchOptions): Promise<BrowserType> {
+    }: BrowserLaunchOptions): Promise<BrowserType> {
         const proxy = ProxyManager.getRandomUnblockedProxyUrl();
         this.currentProxy = proxy ?? undefined;
 
