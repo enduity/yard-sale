@@ -82,7 +82,7 @@ export async function middleware(request: NextRequest) {
         }
         pathname = new URL(imageUrl, request.url).pathname;
     }
-    let ip = 'ip' in request && typeof request.ip === 'string' ? request.ip : undefined;
+    let ip: string | undefined;
     // If undefined, reject the request
     if (!ip) {
         const forwardedFor = request.headers.get('X-Forwarded-For');
