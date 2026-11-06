@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Install dependencies required for Puppeteer
 RUN apk add --no-cache \
@@ -33,7 +33,7 @@ RUN pnpm run build
 RUN pnpm prune --prod
 
 # Stage 2: Production
-FROM node:20-alpine
+FROM node:22-alpine
 
 # Install Chromium for Puppeteer
 RUN apk add --no-cache \
