@@ -22,7 +22,7 @@
     "glob": "^11.0.0",
     "https-proxy-agent": "^7.0.5",
     "jsdom": "^25.0.1",
-    "next": "14.2.14",
+    "next": "15.5.29",
     "node-fetch": "^3.3.2",
     "prisma": "^5.20.0",
     "proxy-chain": "^2.5.4",
