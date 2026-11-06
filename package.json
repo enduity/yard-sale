@@ -12,7 +12,7 @@
     "@prisma/client": "5.20.0",
     "@types/jsdom": "^21.1.7",
     "@types/ws": "^8.5.12",
-    "cheerio": "^1.0.0",
+    "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
     "cycletls": "^1.0.26",
     "fastest-levenshtein": "^1.0.16",
