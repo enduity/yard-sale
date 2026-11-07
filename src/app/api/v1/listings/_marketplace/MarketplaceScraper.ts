@@ -7,7 +7,7 @@ import {
     MarketplaceScraperOptions,
 } from '@/types/marketplace';
 import { urlGenerator } from '@/app/api/v1/listings/_marketplace/urlGenerator';
-import { JSDOM } from 'jsdom';
+import { load } from 'cheerio';
 import {
     JsonProcessor,
     JsonType,
@@ -123,14 +123,12 @@ export class MarketplaceScraper {
             throw new ProxyBlockedError('Last proxy blocked due to login requirement');
         }
 
-        const dom = new JSDOM(htmlContent);
-        const scriptTags = dom.window.document.querySelectorAll(
-            'script[type="application/json"]',
-        );
+        const $ = load(htmlContent);
+        const scriptTags = $('script[type="application/json"]').toArray();
 
         let listingDetails: ListingData[] = [];
         for (const scriptTag of scriptTags) {
-            const textContent = scriptTag.textContent;
+            const textContent = $(scriptTag).text();
             if (textContent && JsonProcessor.isPreloadJsonString(textContent)) {
                 const processor = new JsonProcessor(textContent, JsonType.preload);
                 const tagListingDetails: ListingData[] = processor.getListingData();
