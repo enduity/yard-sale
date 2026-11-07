@@ -17,7 +17,7 @@ export function SuggestionsDropdown({
 }) {
     return (
         <>
-            <div className="divide-y border-b">
+            <div className="divide-y divide-gray-200 border-b border-gray-200">
                 {searchSuggestions.map((term, index) => (
                     <SearchSuggestion
                         key={term}
