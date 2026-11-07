@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Install dependencies required for Puppeteer
 RUN apk add --no-cache \
@@ -20,7 +20,8 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+RUN npm install -g pnpm@10.34.9 && pnpm install --frozen-lockfile
 
 # Copy the rest of the source code
 COPY . .
@@ -33,7 +34,7 @@ RUN pnpm run build
 RUN pnpm prune --prod
 
 # Stage 2: Production
-FROM node:20-alpine
+FROM node:22-alpine
 
 # Install Chromium for Puppeteer
 RUN apk add --no-cache \
@@ -57,7 +58,7 @@ COPY --from=builder /app/.env ./.env
 RUN chmod +x .next/server/cycletls/index*
 
 # Set environment variables for Puppeteer
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 ENV CHROMIUM_PATH=/usr/bin/chromium-browser
 

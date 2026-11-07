@@ -12,26 +12,23 @@
     "@prisma/client": "5.20.0",
     "@types/jsdom": "^21.1.7",
     "@types/ws": "^8.5.12",
-    "axios": "^1.7.7",
-    "axios-retry": "^4.5.0",
-    "cheerio": "^1.0.0",
+    "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
     "cycletls": "^1.0.26",
     "fastest-levenshtein": "^1.0.16",
-    "form-data": "^4.0.1",
-    "glob": "^11.0.0",
+    "form-data": "^4.0.6",
+    "glob": "^14.0.4",
     "https-proxy-agent": "^7.0.5",
     "jsdom": "^25.0.1",
-    "next": "14.2.14",
+    "next": "15.5.29",
     "node-fetch": "^3.3.2",
     "prisma": "^5.20.0",
     "proxy-chain": "^2.5.4",
-    "puppeteer": "^23.5.3",
+    "puppeteer": "^25.16.0",
     "react": "^18",
     "react-dom": "^18",
-    "sharp": "^0.33.5",
+    "sharp": "^0.35.5",
     "socks-proxy-agent": "^8.0.4",
-    "sqlite3": "^5.1.7",
     "web-streams-polyfill": "^4.0.0"
   },
   "devDependencies": {
@@ -39,20 +36,34 @@
     "@types/node-fetch": "^2.6.11",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "copy-webpack-plugin": "^12.0.2",
+    "copy-webpack-plugin": "^14.0.0",
     "cross-env": "^7.0.3",
     "eslint": "^8",
-    "eslint-config-next": "14.2.14",
+    "eslint-config-next": "15.5.29",
     "eslint-config-prettier": "^9.1.0",
-    "postcss": "^8",
+    "postcss": "^8.5.32",
     "prettier": "3.3.3",
     "prettier-plugin-classnames": "^0.7.3",
-    "prettier-plugin-merge": "^0.7.1",
+    "prettier-plugin-merge": "^0.10.2",
     "prettier-plugin-tailwindcss": "^0.6.8",
-    "tailwindcss": "^3.4.1",
+    "tailwindcss": "^3.4.19",
     "typescript": "^5"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@10.34.9",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "bufferutil",
+      "prisma",
+      "puppeteer",
+      "sharp"
+    ]
   }
 }

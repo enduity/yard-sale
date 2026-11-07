@@ -46,9 +46,6 @@ const nextConfig = (phase) => {
     const isProductionBuild = phase === PHASE_PRODUCTION_BUILD;
 
     return {
-        experimental: {
-            instrumentationHook: true,
-        },
         webpack: (config, { isServer }) => {
             if (isServer && (isDevelopment || isProductionBuild)) {
                 // Dynamically load the CopyWebpackPlugin only in development or production build

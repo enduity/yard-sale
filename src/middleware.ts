@@ -67,7 +67,22 @@ function calculateRetryAfter(
 }
 
 export async function middleware(request: NextRequest) {
-    let ip: string | undefined = request.ip;
+    let pathname = request.nextUrl.pathname;
+    if (
+        pathname.startsWith('/api/v1/thumbnails/') &&
+        !request.headers.has('User-Agent')
+    ) {
+        // The image optimiser fetches these public images without client headers.
+        return NextResponse.next();
+    }
+    if (pathname === '/_next/image') {
+        const imageUrl = request.nextUrl.searchParams.get('url');
+        if (!imageUrl?.startsWith('/api/v1/thumbnails/')) {
+            return NextResponse.next();
+        }
+        pathname = new URL(imageUrl, request.url).pathname;
+    }
+    let ip: string | undefined;
     // If undefined, reject the request
     if (!ip) {
         const forwardedFor = request.headers.get('X-Forwarded-For');
@@ -80,7 +95,6 @@ export async function middleware(request: NextRequest) {
     const userAgent = request.headers.get('User-Agent');
     if (!userAgent) return new NextResponse('Forbidden', { status: 403 });
     const currentTime = Date.now();
-    const pathname = request.nextUrl.pathname;
 
     rateLimitRequests.push({ ip, userAgent, time: new Date(currentTime), pathname });
     const retryAfter = calculateRetryAfter(ip, userAgent, pathname);
@@ -105,5 +119,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: '/api/v1/:path*',
+    matcher: ['/api/v1/:path*', '/_next/image'],
 };
