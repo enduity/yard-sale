@@ -26,7 +26,7 @@ interface.
 ### Prerequisites
 
 - Install [pnpm](https://pnpm.io/) 12.
-- Node.js version 22.12 or higher is required.
+- Node.js 26 is required.
 
 ### Installation
 
