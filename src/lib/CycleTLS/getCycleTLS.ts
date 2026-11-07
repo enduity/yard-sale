@@ -3,11 +3,8 @@ import { getCycleTLSPath } from '@/lib/CycleTLS/getCycleTLSPath';
 
 declare global {
     // Declare global variables to maintain the singleton instance
-    // eslint-disable-next-line no-var
     var cycleTLSPromise: Promise<CycleTLSClient> | undefined;
-    // eslint-disable-next-line no-var
     var isCycleTLSExitHandlerAttached: boolean | undefined;
-    // eslint-disable-next-line no-var
     var proxy: string | undefined;
 }
 

@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS='--enable-source-maps' next dev",
-    "build": "next build",
+    "dev": "cross-env NODE_OPTIONS='--enable-source-maps' next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint src"
   },
@@ -20,7 +20,7 @@
     "glob": "^14.0.4",
     "https-proxy-agent": "^7.0.5",
     "jsdom": "^25.0.1",
-    "next": "15.5.29",
+    "next": "16.4.5",
     "node-fetch": "^3.3.2",
     "prisma": "^5.20.0",
     "proxy-chain": "^2.5.4",
@@ -40,7 +40,7 @@
     "copy-webpack-plugin": "^14.0.0",
     "cross-env": "^7.0.3",
     "eslint": "^9.39.5",
-    "eslint-config-next": "15.5.29",
+    "eslint-config-next": "16.4.5",
     "eslint-config-prettier": "^9.1.0",
     "postcss": "^8.5.32",
     "prettier": "3.3.3",

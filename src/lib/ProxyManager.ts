@@ -9,9 +9,6 @@ interface Proxy {
     blocked: boolean;
 }
 
-// ESLint ignores to allow global variable declarations and modifications
-/* eslint-disable no-var */
-
 // Declare the global variable 'proxies' with proper TypeScript typing
 declare global {
     var proxies: Proxy[] | undefined;
