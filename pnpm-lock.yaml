@@ -224,8 +224,8 @@ importers:
         specifier: ^0.35.5
         version: 0.35.5(@types/node@26.6.6)
       socks-proxy-agent:
-        specifier: ^8.0.4
-        version: 8.0.4(supports-color@8.1.1)
+        specifier: ^10.1.0
+        version: 10.1.0(supports-color@8.1.1)
       web-streams-polyfill:
         specifier: ^4.0.0
         version: 4.0.0
@@ -2756,6 +2756,10 @@ packages:
   smart-buffer@4.2.0:
     resolution: {integrity: sha512-94hK0Hh8rPqQl2xXc3HsaBoOXKV20MToPkcXvwbISWLEs+64sBq5kFgn2kJDHb1Pry9yrP0dxrCI9RRci7RXKg==}
     engines: {node: '>= 6.0.0', npm: '>= 3.0.0'}
+
+  socks-proxy-agent@10.1.0:
+    resolution: {integrity: sha512-WlMj/67cEJ6MDI1OcsnjuYKDNDoyPCCYZ249kuuXPiMDw9F8PXkVaQ7YWu3siTydfQ/4BEZcvGzu+aYvz7dDCQ==}
+    engines: {node: '>= 20'}
 
   socks-proxy-agent@8.0.4:
     resolution: {integrity: sha512-GNAq/eg8Udq2x0eNiFkr9gRg5bA7PXEWagQdeRX4cPSG+X/8V38v637gim9bjFptMk1QWsCTr0ttrJEiXbNnRw==}
@@ -5863,6 +5867,14 @@ snapshots:
       side-channel-weakmap: 1.0.2
 
   smart-buffer@4.2.0: {}
+
+  socks-proxy-agent@10.1.0(supports-color@8.1.1):
+    dependencies:
+      agent-base: 9.0.0
+      debug: 4.4.3(supports-color@8.1.1)
+      socks: 2.8.10
+    transitivePeerDependencies:
+      - supports-color
 
   socks-proxy-agent@8.0.4(supports-color@8.1.1):
     dependencies:
