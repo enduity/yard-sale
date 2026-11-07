@@ -77,7 +77,7 @@ export class DatabaseManager {
         if (imageBuffer) {
             await prisma.thumbnail.create({
                 data: {
-                    image: imageBuffer,
+                    image: Buffer.from(imageBuffer),
                     Listing: { connect: { id: listing.id } },
                 },
             });
