@@ -46,6 +46,7 @@ const nextConfig = (phase) => {
     const isProductionBuild = phase === PHASE_PRODUCTION_BUILD;
 
     return {
+        serverExternalPackages: ['@prisma/adapter-better-sqlite3'],
         webpack: (config, { isServer }) => {
             if (isServer && (isDevelopment || isProductionBuild)) {
                 // Dynamically load the CopyWebpackPlugin only in development or production build
