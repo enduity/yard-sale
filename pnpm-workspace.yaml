@@ -5,3 +5,4 @@ allowBuilds:
   "prisma": true
   "puppeteer": true
   "sharp": true
+  "better-sqlite3": true

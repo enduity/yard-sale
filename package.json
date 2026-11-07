@@ -9,6 +9,7 @@
     "lint": "eslint src"
   },
   "dependencies": {
+    "@prisma/adapter-better-sqlite3": "7.10.1",
     "@prisma/client": "6.19.3",
     "@types/ws": "^8.5.12",
     "cheerio": "^1.2.0",
