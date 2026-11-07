@@ -25,7 +25,7 @@ export function CheckBoxOption({
             >
                 <div
                     className={clsx(
-                        'transition-maxWidth overflow-clip duration-500',
+                        'transition-[max-width] overflow-clip duration-500',
                         selected && 'visible max-w-4',
                         !selected && 'invisible max-w-0',
                     )}
