@@ -1,9 +1,10 @@
 // noinspection ES6ConvertVarToLetConst
 
 import { PrismaClient } from '@prisma/client';
+import { getDatabaseUrl } from '../../prisma/databaseUrl';
 
 const prismaClientSingleton = () => {
-    return new PrismaClient();
+    return new PrismaClient({ datasourceUrl: getDatabaseUrl() });
 };
 
 declare global {
