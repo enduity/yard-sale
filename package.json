@@ -59,5 +59,6 @@
       "version": "^26.0.0",
       "onFail": "error"
     }
-  }
+  },
+  "type": "module"
 }
