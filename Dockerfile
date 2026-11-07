@@ -17,7 +17,7 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy only the package files for dependency installation
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Install dependencies
 ENV PUPPETEER_SKIP_DOWNLOAD=true
