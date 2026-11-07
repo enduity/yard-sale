@@ -27,7 +27,7 @@ RUN npm install -g pnpm@10.34.9 && pnpm install --frozen-lockfile
 COPY . .
 
 # Generate Prisma client and build the app
-RUN npx prisma generate
+RUN pnpm exec prisma generate
 RUN pnpm run build
 
 # Remove development dependencies and build-time files
