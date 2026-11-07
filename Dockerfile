@@ -72,4 +72,4 @@ ENV DATABASE_URL=file:./prisma/prod.db
 EXPOSE 3000
 
 # Run the app
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run start"]
+CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && ./node_modules/.bin/next start"]
