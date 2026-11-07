@@ -21,7 +21,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Install dependencies
 ENV PUPPETEER_SKIP_DOWNLOAD=true
-RUN npm install -g pnpm@12.18.0 && pnpm install --frozen-lockfile
+RUN npm install -g 'pnpm@^12.0.0' && pnpm install --frozen-lockfile
 
 # Copy the rest of the source code
 COPY . .
