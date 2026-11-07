@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { Listing, ListingData, ListingSource } from '@/types/listings';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import { SearchCriteria } from '@/types/search';
 import { fetchWithCycleTLS } from '@/lib/CycleTLS/fetchWithCycleTLS';
 import { getCycleTLS } from '@/lib/CycleTLS/getCycleTLS';

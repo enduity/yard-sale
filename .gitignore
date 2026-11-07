@@ -40,3 +40,6 @@ dev.db*
 
 # vcs.xml from IDE
 .idea/vcs.xml
+
+# generated Prisma client
+/src/generated/prisma/
