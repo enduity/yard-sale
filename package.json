@@ -47,7 +47,7 @@
     "prettier-plugin-merge": "^0.10.2",
     "prettier-plugin-tailwindcss": "^0.6.8",
     "tailwindcss": "^3.4.19",
-    "typescript": "^5"
+    "typescript": "^6.0.3"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
