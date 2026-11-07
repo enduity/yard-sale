@@ -23,7 +23,7 @@
     "next": "16.4.5",
     "node-fetch": "^3.3.2",
     "prisma": "^5.20.0",
-    "proxy-chain": "^2.5.4",
+    "proxy-chain": "^3.0.1",
     "puppeteer": "^25.16.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

@@ -209,8 +209,8 @@ importers:
         specifier: ^5.20.0
         version: 5.20.0
       proxy-chain:
-        specifier: ^2.5.4
-        version: 2.5.4(supports-color@8.1.1)
+        specifier: ^3.0.1
+        version: 3.0.1(supports-color@8.1.1)
       puppeteer:
         specifier: ^25.16.0
         version: 25.16.0(bufferutil@4.0.8)(yauzl@2.10.0)
@@ -2573,9 +2573,9 @@ packages:
       kerberos:
         optional: true
 
-  proxy-chain@2.5.4:
-    resolution: {integrity: sha512-Tsdqbo3fyteHO3dHtxcBE6uKlhg4sO2qtDxmiM805l3O08R6zRbGTeIDbW1ksSv/n4xPQ3B0YiK+KZ2D9YIfBA==}
-    engines: {node: '>=14'}
+  proxy-chain@3.0.1:
+    resolution: {integrity: sha512-ZISgL5pwUBXcijycj9ofC8wbJ9GmSEka71kn4dzjphDxfZcecQ6uvU2NWuyQcGdEf0XfscXWDs3KKgjxeQXTZw==}
+    engines: {node: '>=20.11'}
 
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
@@ -2760,10 +2760,6 @@ packages:
   socks-proxy-agent@10.1.0:
     resolution: {integrity: sha512-WlMj/67cEJ6MDI1OcsnjuYKDNDoyPCCYZ249kuuXPiMDw9F8PXkVaQ7YWu3siTydfQ/4BEZcvGzu+aYvz7dDCQ==}
     engines: {node: '>= 20'}
-
-  socks-proxy-agent@8.0.4:
-    resolution: {integrity: sha512-GNAq/eg8Udq2x0eNiFkr9gRg5bA7PXEWagQdeRX4cPSG+X/8V38v637gim9bjFptMk1QWsCTr0ttrJEiXbNnRw==}
-    engines: {node: '>= 14'}
 
   socks@2.8.10:
     resolution: {integrity: sha512-e0VyvkVTwVYViNovRkZ9aodhxVlyoMn7eJhVUPxZ+eK9P/7CBkxvvsBOHqFPEH416726W8tLXXXjKwqgTErrCQ==}
@@ -5602,11 +5598,11 @@ snapshots:
 
   proxy-agent-negotiate@1.1.0: {}
 
-  proxy-chain@2.5.4(supports-color@8.1.1):
+  proxy-chain@3.0.1(supports-color@8.1.1):
     dependencies:
       socks: 2.8.10
-      socks-proxy-agent: 8.0.4(supports-color@8.1.1)
-      tslib: 2.7.0
+      socks-proxy-agent: 10.1.0(supports-color@8.1.1)
+      tslib: 2.9.1
     transitivePeerDependencies:
       - supports-color
 
@@ -5876,14 +5872,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  socks-proxy-agent@8.0.4(supports-color@8.1.1):
-    dependencies:
-      agent-base: 7.1.1(supports-color@8.1.1)
-      debug: 4.3.7(supports-color@8.1.1)
-      socks: 2.8.10
-    transitivePeerDependencies:
-      - supports-color
-
   socks@2.8.10:
     dependencies:
       ip-address: 10.7.6
@@ -6046,7 +6034,8 @@ snapshots:
       minimist: 1.2.8
       strip-bom: 3.0.0
 
-  tslib@2.7.0: {}
+  tslib@2.7.0:
+    optional: true
 
   tslib@2.9.1: {}
 
