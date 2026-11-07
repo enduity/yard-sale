@@ -46,7 +46,7 @@
     "prettier": "3.3.3",
     "prettier-plugin-classnames": "^0.7.3",
     "prettier-plugin-merge": "^0.10.2",
-    "prettier-plugin-tailwindcss": "^0.6.8",
+    "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4.3.5",
     "typescript": "^6.0.3"
   },
