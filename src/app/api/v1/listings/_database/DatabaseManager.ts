@@ -211,11 +211,11 @@ export class DatabaseManager {
             if (useCycleTLS) {
                 const cycleTLS = await getCycleTLS();
                 const response = await fetchWithCycleTLS(cycleTLS, url);
-                if (!response || typeof response.body === 'object') {
+                if (!response) {
                     console.error(`Failed to fetch image buffer for ${url}`);
                     return null;
                 }
-                buffer = Buffer.from(response.body, 'base64');
+                buffer = Buffer.from(await response.arrayBuffer());
             }
             if (!buffer) {
                 console.error(`Failed to fetch image buffer for ${url}`);

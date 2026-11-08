@@ -112,10 +112,10 @@ export class MarketplaceScraper {
         proxy = ProxyManager.getRandomUnblockedProxyUrl() ?? undefined;
         cycleTLSOptions.proxy = proxy;
         const response = await this.cycleTLS!(url, cycleTLSOptions, 'get');
-        if (!response?.body) {
+        const htmlContent = await response.text();
+        if (!htmlContent) {
             throw new Error('Invalid response body');
         }
-        const htmlContent = response.body.toString();
         if (proxy && htmlContent.includes('You must log in to continue')) {
             if (ProxyManager.blockProxy(proxy)) {
                 return this.fetchFirstListings();
