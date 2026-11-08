@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
     const searchCriteria: SearchCriteria = {
         condition: params.condition,
         location: params.location,
+        sort: params.sort,
     };
 
     const cachedListings = await DatabaseManager.getListings(

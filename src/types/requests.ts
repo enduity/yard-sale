@@ -14,6 +14,7 @@ export enum RequestLocations {
 export enum RequestSort {
     PriceAsc = 'price_asc',
     PriceDesc = 'price_desc',
+    Newest = 'newest',
 }
 
 export type RequestOptions = {
@@ -106,7 +107,7 @@ export function findFirstInvalidOption(options: Partial<RequestOptions>): string
  */
 export type GetListingsOptions = Pick<
     RequestOptions,
-    'query' | 'condition' | 'location'
+    'query' | 'condition' | 'location' | 'sort'
 >;
 
 /**
