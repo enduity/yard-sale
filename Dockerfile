@@ -56,9 +56,6 @@ COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/next.config.mjs ./next.config.mjs
 COPY --from=builder /app/.env ./.env
 
-# Make CycleTLS binaries executable
-RUN chmod +x .next/server/cycletls/index*
-
 # Set environment variables for Puppeteer
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
