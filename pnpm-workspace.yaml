@@ -6,3 +6,7 @@ allowBuilds:
   "puppeteer": true
   "sharp": true
   "better-sqlite3": true
+
+overrides:
+  # Remove when typescript-eslint adopts minimatch 11.
+  "@typescript-eslint/typescript-estree>minimatch": "^11.0.5"
