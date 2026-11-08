@@ -18,7 +18,7 @@ export enum RequestSort {
 
 export type RequestOptions = {
     query: string;
-    location: RequestLocations;
+    location?: RequestLocations;
     minPrice?: number;
     maxPrice?: number;
     sort?: RequestSort;
@@ -39,8 +39,9 @@ function getInvalidOptionNames(options: Partial<RequestOptions>): string[] {
     }
 
     if (
-        typeof options.location !== 'string' ||
-        !Object.values(RequestLocations).includes(options.location)
+        options.location !== undefined &&
+        (typeof options.location !== 'string' ||
+            !Object.values(RequestLocations).includes(options.location))
     ) {
         invalidParams.push('location');
     }
