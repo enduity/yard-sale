@@ -59,30 +59,28 @@ export class OkidokiScraper extends BaseScraper {
 
             for (const element of $('.classifieds__item')) {
                 const title = $(element)
-                    .find('a.horiz-offer-card__title-link')
+                    .find('a.offer-card__title-link')
                     .text()
                     .trim();
                 const priceText = $(element)
-                    .find('.horiz-offer-card__price-value')
+                    .find('.offer-card__price-value')
                     .text()
-                    .replace(/[€$£]/, '')
+                    .replace(/[\s€$£]/g, '')
                     .trim();
                 const price = Number(priceText);
-                const location = $(element)
-                    .find('.horiz-offer-card__location')
-                    .text()
-                    .trim();
+                // Okidoki no longer shows seller location in the card markup
+                const location = '';
                 const urlValue = $(element)
-                    .find('a.horiz-offer-card__title-link')
+                    .find('a.offer-card__link')
                     .attr('href')
                     ?.trim();
                 if (!urlValue) continue;
                 const url = new URL(urlValue, 'https://www.okidoki.ee').href;
                 const thumbnailNoscript = $(element)
-                    .find('a.horiz-offer-card__image-link > noscript')
+                    .find('a.offer-card__image-link > noscript')
                     .html();
                 const listedAtText = $(element)
-                    .find('.horiz-offer-card__date')
+                    .find('.offer-card__date')
                     .text()
                     .trim();
                 let listedAt: Date;
@@ -99,7 +97,7 @@ export class OkidokiScraper extends BaseScraper {
                 const thumbnailSrc = new URL(thumbnailValue, 'https://www.okidoki.ee')
                     .href;
 
-                if (title && url && !isNaN(price) && location && thumbnailSrc) {
+                if (title && url && !isNaN(price) && thumbnailSrc) {
                     yield { title, price, location, url, thumbnailSrc, listedAt };
                 }
             }
