@@ -15,7 +15,6 @@
     "clsx": "^2.1.1",
     "cycletls": "^2.0.5",
     "fastest-levenshtein": "^1.0.16",
-    "glob": "^14.0.4",
     "https-proxy-agent": "^9.1.0",
     "next": "16.4.5",
     "node-fetch": "^3.3.2",
