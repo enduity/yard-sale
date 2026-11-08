@@ -4,6 +4,7 @@ import { BaseScraper } from '@/app/api/v1/listings/_common/BaseScraper';
 import { fetchWithCycleTLS } from '@/lib/CycleTLS/fetchWithCycleTLS';
 import { ListingDataWithDate, ListingSource } from '@/types/listings';
 import { Condition, SearchCriteria } from '@/types/search';
+import { RequestLocations } from '@/types/requests';
 
 export class OkidokiScraper extends BaseScraper {
     constructor(query: string, searchCriteria?: SearchCriteria) {
@@ -24,6 +25,17 @@ export class OkidokiScraper extends BaseScraper {
             queryParams.cond = '1';
         } else if (condition === Condition.Used) {
             queryParams.cond = '2';
+        }
+
+        const location = this.searchCriteria?.location;
+        if (location && location !== RequestLocations.Eesti) {
+            Object.assign(queryParams, {
+                [RequestLocations.Tallinn]: { as_m: '1' },
+                [RequestLocations.Harjumaa]: { as_r: '1' },
+                [RequestLocations.Tartu]: { as_p: '684' },
+                [RequestLocations.Parnu]: { as_p: '532' },
+                [RequestLocations.Narva]: { as_m: '6' },
+            }[location]);
         }
 
         url.search = Object.keys(queryParams)
