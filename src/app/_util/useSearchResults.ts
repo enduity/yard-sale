@@ -1,8 +1,26 @@
 import { useCallback, useRef, useState } from 'react';
 import { Listing as ListingModel } from '@/types/listings';
 import { getListings } from '@/app/_util/getListings';
-import { GetListingsOptions, SearchOptionsState } from '@/types/requests';
+import {
+    GetListingsOptions,
+    RequestSort,
+    SearchOptionsState,
+} from '@/types/requests';
 import { GetListingsError } from '@/app/_util/GetListingsError';
+
+function sortResults(listings: ListingModel[], sort?: RequestSort) {
+    if (sort === RequestSort.PriceAsc) {
+        return [...listings].sort(
+            (a, b) => Number(a.price) - Number(b.price),
+        );
+    }
+    if (sort === RequestSort.PriceDesc) {
+        return [...listings].sort(
+            (a, b) => Number(b.price) - Number(a.price),
+        );
+    }
+    return listings;
+}
 
 export function useSearchResults() {
     const [searchResults, setSearchResults] = useState<ListingModel[]>([]);
@@ -20,8 +38,10 @@ export function useSearchResults() {
                 try {
                     for await (const data of dataGeneratorRef.current) {
                         if (executedSearchOptions.current === currentSearchOptions) {
-                            const newSearchResults =
-                                searchResultsRef.current.concat(data);
+                            const newSearchResults = sortResults(
+                                searchResultsRef.current.concat(data),
+                                currentSearchOptions.sort,
+                            );
                             setSearchResults(newSearchResults);
                             searchResultsRef.current = newSearchResults;
                         }
