@@ -1,10 +1,12 @@
 // noinspection ES6ConvertVarToLetConst
 
 import { PrismaClient } from '@/generated/prisma/client';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { getDatabaseUrl } from '../../prisma/databaseUrl';
 
 const prismaClientSingleton = () => {
-    return new PrismaClient({ datasourceUrl: getDatabaseUrl() });
+    const adapter = new PrismaBetterSqlite3({ url: getDatabaseUrl() });
+    return new PrismaClient({ adapter });
 };
 
 declare global {

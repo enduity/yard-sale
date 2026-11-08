@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "7.10.1",
-    "@prisma/client": "6.19.3",
+    "@prisma/client": "7.10.1",
     "@types/ws": "^8.5.12",
     "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
@@ -21,7 +21,7 @@
     "https-proxy-agent": "^9.1.0",
     "next": "16.4.5",
     "node-fetch": "^3.3.2",
-    "prisma": "6.19.3",
+    "prisma": "7.10.1",
     "proxy-chain": "^3.0.1",
     "puppeteer": "^25.16.0",
     "react": "^19.3.1",
