@@ -10,6 +10,5 @@ export enum Condition {
  * Represents the search criteria for a listing.
  */
 export type SearchCriteria = {
-    maxDaysListed?: 1 | 7 | 30;
     condition?: Condition;
 };

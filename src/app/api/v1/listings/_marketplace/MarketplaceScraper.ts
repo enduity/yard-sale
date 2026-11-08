@@ -79,7 +79,6 @@ export class MarketplaceScraper {
             query: this.query,
             location: this.options.location,
             radius: this.options.radius,
-            daysSinceListed: this.searchCriteria?.maxDaysListed,
             itemCondition: condition,
         };
     }
