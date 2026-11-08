@@ -8,7 +8,7 @@ import { SearchOptionPill } from '@/app/_components/SearchBar/options/SearchOpti
 import { SearchOption } from '@/app/_components/SearchBar/options/SearchOption';
 import { BulletOption } from '@/app/_components/SearchBar/options/BulletOption';
 import { Condition } from '@/types/search';
-import { RequestLocations } from '@/types/requests';
+import { RequestLocations, RequestSort } from '@/types/requests';
 import { usePreviousSearches } from '@/app/_util/usePreviousSearches';
 import { SuggestionsDropdown } from '@/app/_components/SearchBar/SuggestionsDropdown';
 
@@ -172,6 +172,72 @@ export function SearchBar({ handleSearch }: SearchBarProps) {
                             selected={searchOptions.condition === Condition.Used}
                         >
                             Used
+                        </BulletOption>
+                    </SearchOption>
+                </SearchOptionPill>
+                <SearchOptionPill
+                    text={
+                        searchOptions.sort
+                            ? {
+                                  [RequestSort.Newest]: 'Newest',
+                                  [RequestSort.PriceAsc]: 'Price ↑',
+                                  [RequestSort.PriceDesc]: 'Price ↓',
+                              }[searchOptions.sort]
+                            : 'Sort'
+                    }
+                    optionUsed={searchOptions.sort !== undefined}
+                    dropdownActive={openedOption === 'Sort'}
+                    onToggle={() =>
+                        openedOption === 'Sort'
+                            ? setOpenedOption('')
+                            : setOpenedOption('Sort')
+                    }
+                    onClose={() => setOpenedOption('')}
+                >
+                    <SearchOption name="Sort" onClose={() => setOpenedOption('')}>
+                        <BulletOption
+                            onClick={() =>
+                                setSearchOptions({
+                                    ...searchOptions,
+                                    sort: undefined,
+                                })
+                            }
+                            selected={searchOptions.sort === undefined}
+                        >
+                            Default
+                        </BulletOption>
+                        <BulletOption
+                            onClick={() =>
+                                setSearchOptions({
+                                    ...searchOptions,
+                                    sort: RequestSort.Newest,
+                                })
+                            }
+                            selected={searchOptions.sort === RequestSort.Newest}
+                        >
+                            Newest first
+                        </BulletOption>
+                        <BulletOption
+                            onClick={() =>
+                                setSearchOptions({
+                                    ...searchOptions,
+                                    sort: RequestSort.PriceAsc,
+                                })
+                            }
+                            selected={searchOptions.sort === RequestSort.PriceAsc}
+                        >
+                            Cheapest first
+                        </BulletOption>
+                        <BulletOption
+                            onClick={() =>
+                                setSearchOptions({
+                                    ...searchOptions,
+                                    sort: RequestSort.PriceDesc,
+                                })
+                            }
+                            selected={searchOptions.sort === RequestSort.PriceDesc}
+                        >
+                            Most expensive first
                         </BulletOption>
                     </SearchOption>
                 </SearchOptionPill>
