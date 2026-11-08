@@ -1,5 +1,4 @@
 import initCycleTLS, { CycleTLSClient } from '@/lib/CycleTLS/client';
-import { getCycleTLSPath } from '@/lib/CycleTLS/getCycleTLSPath';
 import { createServer, AddressInfo } from 'node:net';
 
 declare global {
@@ -26,13 +25,12 @@ export function getCycleTLS(): Promise<CycleTLSClient> {
     }
 
     if (global.cycleTLSPromise === undefined) {
-        const executablePath = getCycleTLSPath();
         global.proxy = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || '';
         if (global.proxy) {
             console.info(`CycleTLS using proxy: ${global.proxy}`);
         }
         global.cycleTLSPromise = getAvailablePort().then((port) =>
-            initCycleTLS({ executablePath, port }),
+            initCycleTLS({ port }),
         );
 
         // Attach an exit handler to clean up the CycleTLS process
