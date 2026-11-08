@@ -40,6 +40,8 @@ model Search {
 model SearchCriteria {
   id            Int      @id @default(autoincrement())
   condition     String?
+  location      String?
+  sort          String?
   searchId      Int      @unique
   search        Search   @relation(fields: [searchId], references: [id], onDelete: Cascade)
 }
