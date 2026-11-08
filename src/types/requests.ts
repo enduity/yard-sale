@@ -107,7 +107,7 @@ export function findFirstInvalidOption(options: Partial<RequestOptions>): string
  */
 export type GetListingsOptions = Pick<
     RequestOptions,
-    'query' | 'condition' | 'location' | 'sort'
+    'query' | 'condition' | 'location' | 'minPrice' | 'maxPrice' | 'sort'
 >;
 
 /**

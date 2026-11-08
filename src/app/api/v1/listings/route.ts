@@ -41,6 +41,14 @@ export async function GET(req: NextRequest) {
         searchCriteria,
     );
 
+    const matchesPrice = (listing: Listing) => {
+        const price = Number(listing.price);
+        return (
+            (params.minPrice === undefined || price >= params.minPrice) &&
+            (params.maxPrice === undefined || price <= params.maxPrice)
+        );
+    };
+
     const alreadyExists = await QueueManager.findQueueProcess(
         params.query,
         searchCriteria,
@@ -50,6 +58,7 @@ export async function GET(req: NextRequest) {
             new ReadableStream({
                 async pull(controller) {
                     for (const listing of cachedListings) {
+                        if (!matchesPrice(listing)) continue;
                         const listingData = new TextEncoder().encode(
                             JSON.stringify(listing),
                         );
@@ -77,6 +86,7 @@ export async function GET(req: NextRequest) {
             if (count >= 200) {
                 break;
             }
+            if (!matchesPrice(listing)) continue;
             const listingData = new TextEncoder().encode(JSON.stringify(listing));
             yield listingData;
             count++;
