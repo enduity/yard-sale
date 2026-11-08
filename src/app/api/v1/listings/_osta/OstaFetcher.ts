@@ -3,6 +3,7 @@ import { ListingDataWithDate, ListingSource } from '@/types/listings';
 import { fetchWithCycleTLS } from '@/lib/CycleTLS/fetchWithCycleTLS';
 import { BaseScraper } from '@/app/api/v1/listings/_common/BaseScraper';
 import { Condition, SearchCriteria } from '@/types/search';
+import { RequestLocations } from '@/types/requests';
 import { CycleTLSClient } from '@/lib/CycleTLS/client';
 
 type ConditionValue = 'new' | 'used' | 'old' | 'antique';
@@ -19,6 +20,11 @@ export class OstaFetcher extends BaseScraper {
         const url = new URL('https://www.osta.ee');
         url.searchParams.set('fuseaction', 'search.search');
         url.searchParams.set('q[q]', this.query);
+
+        const location = this.searchCriteria?.location;
+        if (location && location !== RequestLocations.Eesti) {
+            url.searchParams.set('q[location]', location);
+        }
 
         const condition = this.searchCriteria?.condition;
         if (condition === Condition.New) {
