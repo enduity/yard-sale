@@ -4,7 +4,7 @@ import { BaseScraper } from '@/app/api/v1/listings/_common/BaseScraper';
 import { fetchWithCycleTLS } from '@/lib/CycleTLS/fetchWithCycleTLS';
 import { ListingDataWithDate, ListingSource } from '@/types/listings';
 import { Condition, SearchCriteria } from '@/types/search';
-import { RequestLocations } from '@/types/requests';
+import { RequestLocations, RequestSort } from '@/types/requests';
 
 export class OkidokiScraper extends BaseScraper {
     constructor(query: string, searchCriteria?: SearchCriteria) {
@@ -25,6 +25,15 @@ export class OkidokiScraper extends BaseScraper {
             queryParams.cond = '1';
         } else if (condition === Condition.Used) {
             queryParams.cond = '2';
+        }
+
+        const sort = this.searchCriteria?.sort;
+        if (sort) {
+            queryParams.sort = {
+                [RequestSort.PriceAsc]: '4',
+                [RequestSort.PriceDesc]: '5',
+                [RequestSort.Newest]: '2',
+            }[sort];
         }
 
         const location = this.searchCriteria?.location;
