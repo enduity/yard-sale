@@ -182,8 +182,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       cycletls:
-        specifier: ^1.0.26
-        version: 1.0.26(bufferutil@4.0.8)
+        specifier: ^2.0.5
+        version: 2.0.5(bufferutil@4.0.8)
       fastest-levenshtein:
         specifier: ^1.0.16
         version: 1.0.16
@@ -987,8 +987,8 @@ packages:
   '@types/lodash@4.17.27':
     resolution: {integrity: sha512-VenMRv/eKNrspX9v3H4dbmjsrnCOYdYBG3kxXKk3dG6X+urBGcj2Prww3xw1U5K4FV/mE4h5GbWd0szEKf+9ew==}
 
-  '@types/node@17.0.45':
-    resolution: {integrity: sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==}
+  '@types/node@20.19.43':
+    resolution: {integrity: sha512-6oYBAi5ikg4Pl+kGsoYtawUMBT2zZMCvPNF7pVLnHZfd1zf38DRiWn/gT01RYCdUqkv7Fhr+C9ot4/tb+2sVvA==}
 
   '@types/node@26.6.6':
     resolution: {integrity: sha512-MzQj+8Kx3XI40OmUAE6Qoh58ZMNstNNMwn2nfd3qWsfe7nDNSqJNzes4njhz6AHwrSHOffSLwXU6yb474Q4aog==}
@@ -1453,8 +1453,9 @@ packages:
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
 
-  cycletls@1.0.26:
-    resolution: {integrity: sha512-QE+vwRjq0nCNnmr3MaVWLHMvUXgD6Kv2cuo8EjDxBu9J+I185BMnsrO5tKrojY78+dtftK2ZzfhGHzG7MOSekQ==}
+  cycletls@2.0.5:
+    resolution: {integrity: sha512-Nud94JBPZu1JTXWJ1GpIoQNR1xxU84WYt7G0dxzwpUe1xAAs6YbihvlQhIhPv9xljjonINJfWPFaeb8Ex1wLhQ==}
+    engines: {node: '>=18.0.0'}
 
   d3-array@3.2.1:
     resolution: {integrity: sha512-gUY/qeHq/yNqqoCKNq4vtpFLdoCdvyNpWoC/KNjhGbhDuQpAM9sIQQKkXSNpXa9h5KySs/gzm7R88WkUutgwWQ==}
@@ -3432,6 +3433,9 @@ packages:
     resolution: {integrity: sha512-nWJ91DjeOkej/TA8pXQ3myruKpKEYgqvpw9lz4OPHj/NWFNluYrjbz9j01CJ8yKQd2g4jFoOkINCTW2I5LEEyw==}
     engines: {node: '>= 0.4'}
 
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+
   undici-types@8.9.0:
     resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
@@ -3538,18 +3542,6 @@ packages:
 
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
-
-  ws@7.5.13:
-    resolution: {integrity: sha512-rsKI6xDBFVf4r/x8XyChGK04QR/XHroxs/jUcoWvtEZM8TPU/X/uIY9B1CsSzYws9ZJb/6bbBu7dPhFW00CAoA==}
-    engines: {node: '>=8.3.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: ^5.0.2
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
 
   ws@8.22.1:
     resolution: {integrity: sha512-oyL6OPYme/CmiFvNuGzeoxCJ4nOrZE2O1FwM9MWM1AsGri6nLXB2pg+lNA8aLeXMSav0J6eIVS1j6vUPzUtK9g==}
@@ -4244,7 +4236,9 @@ snapshots:
 
   '@types/lodash@4.17.27': {}
 
-  '@types/node@17.0.45': {}
+  '@types/node@20.19.43':
+    dependencies:
+      undici-types: 6.21.0
 
   '@types/node@26.6.6':
     dependencies:
@@ -4883,10 +4877,11 @@ snapshots:
 
   csstype@3.2.3: {}
 
-  cycletls@1.0.26(bufferutil@4.0.8):
+  cycletls@2.0.5(bufferutil@4.0.8):
     dependencies:
-      '@types/node': 17.0.45
-      ws: 7.5.13(bufferutil@4.0.8)
+      '@types/node': 20.19.43
+      form-data: 4.0.6
+      ws: 8.22.1(bufferutil@4.0.8)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -7099,6 +7094,8 @@ snapshots:
       has-symbols: 1.1.0
       which-boxed-primitive: 1.1.1
 
+  undici-types@6.21.0: {}
+
   undici-types@8.9.0: {}
 
   undici@7.30.2: {}
@@ -7259,10 +7256,6 @@ snapshots:
       strip-ansi: 7.2.0
 
   wrappy@1.0.2: {}
-
-  ws@7.5.13(bufferutil@4.0.8):
-    optionalDependencies:
-      bufferutil: 4.0.8
 
   ws@8.22.1(bufferutil@4.0.8):
     optionalDependencies:

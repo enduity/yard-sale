@@ -1,6 +1,6 @@
-export { default } from './CycleTLSEnhanced';
+export { default } from 'cycletls';
 export type {
     CycleTLSClient,
     CycleTLSRequestOptions,
     CycleTLSResponse,
-} from './CycleTLSEnhanced';
+} from 'cycletls';
