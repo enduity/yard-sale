@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:22-alpine AS builder
+FROM node:26-alpine AS builder
 
 # Install dependencies required for Puppeteer
 RUN apk add --no-cache \
@@ -17,28 +17,28 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy only the package files for dependency installation
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Install dependencies
 ENV PUPPETEER_SKIP_DOWNLOAD=true
-RUN npm install -g pnpm@10.34.9 && pnpm install --frozen-lockfile
+RUN npm install -g 'pnpm@^12.0.0' && pnpm install --frozen-lockfile
 
 # Copy the rest of the source code
 COPY . .
 
 # Generate Prisma client and build the app
-RUN npx prisma generate
 RUN pnpm run build
 
 # Remove development dependencies and build-time files
 RUN pnpm prune --prod
 
 # Stage 2: Production
-FROM node:22-alpine
+FROM node:26-alpine
 
-# Install Chromium for Puppeteer
+# Install Chromium for Puppeteer and glibc compatibility for CycleTLS
 RUN apk add --no-cache \
     chromium \
+    gcompat \
     nss \
     freetype \
     harfbuzz \
@@ -49,13 +49,12 @@ WORKDIR /app
 # Copy the build output and production dependencies from the builder stage
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/src/generated/prisma ./src/generated/prisma
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/next.config.mjs ./next.config.mjs
 COPY --from=builder /app/.env ./.env
-
-# Make CycleTLS binaries executable
-RUN chmod +x .next/server/cycletls/index*
 
 # Set environment variables for Puppeteer
 ENV PUPPETEER_SKIP_DOWNLOAD=true
@@ -72,4 +71,4 @@ ENV DATABASE_URL=file:./prisma/prod.db
 EXPOSE 3000
 
 # Run the app
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run start"]
+CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && ./node_modules/.bin/next start"]

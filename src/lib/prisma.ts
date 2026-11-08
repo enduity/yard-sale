@@ -1,13 +1,15 @@
 // noinspection ES6ConvertVarToLetConst
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { getDatabaseUrl } from '../../prisma/databaseUrl';
 
 const prismaClientSingleton = () => {
-    return new PrismaClient();
+    const adapter = new PrismaBetterSqlite3({ url: getDatabaseUrl() });
+    return new PrismaClient({ adapter });
 };
 
 declare global {
-    // eslint-disable-next-line no-var
     var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
 }
 

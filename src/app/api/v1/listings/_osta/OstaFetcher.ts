@@ -2,7 +2,7 @@ import { ListingDataWithDate, ListingSource } from '@/types/listings';
 import { fetchWithCycleTLS } from '@/lib/CycleTLS/fetchWithCycleTLS';
 import { BaseScraper } from '@/app/api/v1/listings/_common/BaseScraper';
 import { Condition, SearchCriteria } from '@/types/search';
-import { CycleTLSClient } from 'cycletls';
+import { CycleTLSClient } from '@/lib/CycleTLS/client';
 
 type OstaJsonListing = {
     id: number;
@@ -87,11 +87,12 @@ export class OstaFetcher extends BaseScraper {
         while (hasNextPage) {
             const url = this.craftQueryURL(currentPage);
             const response = await fetchWithCycleTLS(cycleTLS, url);
-            if (!response?.body || typeof response.body !== 'object') {
+            const body = await response?.json();
+            if (!body || typeof body !== 'object') {
                 console.error('Invalid response body from osta.ee');
                 break;
             }
-            const data = response.body as unknown as [
+            const data = body as unknown as [
                 {
                     items: OstaJsonListing[];
                     total: number;

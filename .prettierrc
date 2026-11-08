@@ -13,6 +13,7 @@
   "tailwindFunctions": [
     "clsx"
   ],
-  "endingPosition": "absolute-with-indent",
-  "printWidth": 90
+  "endingPosition": "absolute",
+  "printWidth": 90,
+  "tailwindStylesheet": "./src/app/globals.css"
 }

@@ -23,8 +23,8 @@ export function SearchInput({
             onKeyDown={onKeyDown}
             onBlur={onBlur}
             className={clsx(
-                `w-full rounded-lg border border-gray-300 p-4 shadow-sm focus:border-0
-                focus:outline-none`,
+                `w-full rounded-lg border border-gray-300 p-4 shadow-xs focus:border-0
+                focus:outline-hidden`,
                 className,
             )}
         />

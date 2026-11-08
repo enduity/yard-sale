@@ -66,7 +66,7 @@ function calculateRetryAfter(
     return 0; // No limit exceeded
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     let pathname = request.nextUrl.pathname;
     if (
         pathname.startsWith('/api/v1/thumbnails/') &&

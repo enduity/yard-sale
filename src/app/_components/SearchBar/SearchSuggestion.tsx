@@ -14,20 +14,20 @@ export function SearchSuggestion({
     searchText,
 }: SearchSuggestionProps) {
     const textParts = [];
+    let remainingText = text;
     for (const word of searchText.split(' ')) {
-        const index = text.toLowerCase().indexOf(word.toLowerCase());
+        const index = remainingText.toLowerCase().indexOf(word.toLowerCase());
         if (index === -1) {
             break;
         }
-        textParts.push({ text: text.slice(0, index), isHighlighted: false });
+        textParts.push({ text: remainingText.slice(0, index), isHighlighted: false });
         textParts.push({
-            text: text.slice(index, index + word.length),
+            text: remainingText.slice(index, index + word.length),
             isMatch: true,
         });
-        text = text.slice(index + word.length);
+        remainingText = remainingText.slice(index + word.length);
     }
-    textParts.push({ text, isHighlighted: false });
-    text = textParts.map(({ text }) => text).join('');
+    textParts.push({ text: remainingText, isHighlighted: false });
 
     return (
         <div

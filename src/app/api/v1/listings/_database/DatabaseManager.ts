@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { Listing, ListingData, ListingSource } from '@/types/listings';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import { SearchCriteria } from '@/types/search';
 import { fetchWithCycleTLS } from '@/lib/CycleTLS/fetchWithCycleTLS';
 import { getCycleTLS } from '@/lib/CycleTLS/getCycleTLS';
@@ -77,7 +77,7 @@ export class DatabaseManager {
         if (imageBuffer) {
             await prisma.thumbnail.create({
                 data: {
-                    image: imageBuffer,
+                    image: Buffer.from(imageBuffer),
                     Listing: { connect: { id: listing.id } },
                 },
             });
@@ -211,11 +211,11 @@ export class DatabaseManager {
             if (useCycleTLS) {
                 const cycleTLS = await getCycleTLS();
                 const response = await fetchWithCycleTLS(cycleTLS, url);
-                if (!response || typeof response.body === 'object') {
+                if (!response) {
                     console.error(`Failed to fetch image buffer for ${url}`);
                     return null;
                 }
-                buffer = Buffer.from(response.body, 'base64');
+                buffer = Buffer.from(await response.arrayBuffer());
             }
             if (!buffer) {
                 console.error(`Failed to fetch image buffer for ${url}`);

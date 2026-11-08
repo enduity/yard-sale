@@ -27,12 +27,12 @@ export function Listing({ listing }: { listing: ListingModel }) {
                     sizes="(max-width: 768px) 86vw, (max-width: 1200px) 42vw, 17vw"
                 />
             </div>
-            <div className="flex flex-grow flex-col">
+            <div className="flex grow flex-col">
                 <h2 className="mb-1 break-words text-lg font-semibold text-gray-800">
                     {listing.title}
                 </h2>
                 <p className="mb-2 text-sm text-gray-600">{listing.location}</p>
-                <div className="flex flex-grow flex-row items-end justify-between">
+                <div className="flex grow flex-row items-end justify-between">
                     <span className="text-xl font-bold text-indigo-600">
                         {listing.price.toString()} €
                     </span>

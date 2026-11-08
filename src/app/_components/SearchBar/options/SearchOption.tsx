@@ -10,7 +10,7 @@ export function SearchOption({
     children: ReactNode;
 }) {
     return (
-        <div className="flex flex-col rounded-lg border bg-white px-4 py-3 shadow-md">
+        <div className="flex flex-col rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-md">
             <div className="flex min-w-32 flex-row items-center justify-between">
                 <span className="font-semibold text-gray-800">{name}</span>
                 <button onClick={onClose} className="text-gray-500">

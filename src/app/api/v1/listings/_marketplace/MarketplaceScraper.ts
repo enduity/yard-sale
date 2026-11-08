@@ -7,7 +7,7 @@ import {
     MarketplaceScraperOptions,
 } from '@/types/marketplace';
 import { urlGenerator } from '@/app/api/v1/listings/_marketplace/urlGenerator';
-import { JSDOM } from 'jsdom';
+import { load } from 'cheerio';
 import {
     JsonProcessor,
     JsonType,
@@ -20,7 +20,7 @@ import { QueueManager } from '@/app/api/v1/listings/_database/QueueManager';
 import { Condition, SearchCriteria } from '@/types/search';
 import { getCycleTLS } from '@/lib/CycleTLS/getCycleTLS';
 import ProxyManager from '@/lib/ProxyManager';
-import { CycleTLSRequestOptions, CycleTLSClient } from '@/lib/CycleTLS/CycleTLSEnhanced';
+import { CycleTLSRequestOptions, CycleTLSClient } from '@/lib/CycleTLS/client';
 
 class ProxyBlockedError extends Error {
     constructor(message: string) {
@@ -112,10 +112,10 @@ export class MarketplaceScraper {
         proxy = ProxyManager.getRandomUnblockedProxyUrl() ?? undefined;
         cycleTLSOptions.proxy = proxy;
         const response = await this.cycleTLS!(url, cycleTLSOptions, 'get');
-        if (!response?.body) {
+        const htmlContent = await response.text();
+        if (!htmlContent) {
             throw new Error('Invalid response body');
         }
-        const htmlContent = response.body.toString();
         if (proxy && htmlContent.includes('You must log in to continue')) {
             if (ProxyManager.blockProxy(proxy)) {
                 return this.fetchFirstListings();
@@ -123,14 +123,12 @@ export class MarketplaceScraper {
             throw new ProxyBlockedError('Last proxy blocked due to login requirement');
         }
 
-        const dom = new JSDOM(htmlContent);
-        const scriptTags = dom.window.document.querySelectorAll(
-            'script[type="application/json"]',
-        );
+        const $ = load(htmlContent);
+        const scriptTags = $('script[type="application/json"]').toArray();
 
         let listingDetails: ListingData[] = [];
         for (const scriptTag of scriptTags) {
-            const textContent = scriptTag.textContent;
+            const textContent = $(scriptTag).text();
             if (textContent && JsonProcessor.isPreloadJsonString(textContent)) {
                 const processor = new JsonProcessor(textContent, JsonType.preload);
                 const tagListingDetails: ListingData[] = processor.getListingData();

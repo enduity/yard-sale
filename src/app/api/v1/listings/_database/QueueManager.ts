@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { ListingSource } from '@/types/listings';
 import { SearchCriteria } from '@/types/search';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 
 type QueueProcessOutput = Prisma.QueueProcessGetPayload<{
     include: {

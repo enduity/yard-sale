@@ -1,14 +1,22 @@
-import initCycleTLS, { CycleTLSClient } from '@/lib/CycleTLS/CycleTLSEnhanced';
-import { getCycleTLSPath } from '@/lib/CycleTLS/getCycleTLSPath';
+import initCycleTLS, { CycleTLSClient } from '@/lib/CycleTLS/client';
+import { createServer, AddressInfo } from 'node:net';
 
 declare global {
     // Declare global variables to maintain the singleton instance
-    // eslint-disable-next-line no-var
     var cycleTLSPromise: Promise<CycleTLSClient> | undefined;
-    // eslint-disable-next-line no-var
     var isCycleTLSExitHandlerAttached: boolean | undefined;
-    // eslint-disable-next-line no-var
     var proxy: string | undefined;
+}
+
+function getAvailablePort(): Promise<number> {
+    return new Promise((resolve, reject) => {
+        const server = createServer();
+        server.once('error', reject);
+        server.listen(0, () => {
+            const { port } = server.address() as AddressInfo;
+            server.close((error) => (error ? reject(error) : resolve(port)));
+        });
+    });
 }
 
 export function getCycleTLS(): Promise<CycleTLSClient> {
@@ -17,14 +25,13 @@ export function getCycleTLS(): Promise<CycleTLSClient> {
     }
 
     if (global.cycleTLSPromise === undefined) {
-        const executablePath = getCycleTLSPath();
         global.proxy = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || '';
         if (global.proxy) {
             console.info(`CycleTLS using proxy: ${global.proxy}`);
         }
-        global.cycleTLSPromise = initCycleTLS({
-            executablePath,
-        });
+        global.cycleTLSPromise = getAvailablePort().then((port) =>
+            initCycleTLS({ port }),
+        );
 
         // Attach an exit handler to clean up the CycleTLS process
         if (!global.isCycleTLSExitHandlerAttached) {
