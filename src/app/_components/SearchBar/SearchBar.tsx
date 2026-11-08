@@ -8,6 +8,7 @@ import { SearchOptionPill } from '@/app/_components/SearchBar/options/SearchOpti
 import { SearchOption } from '@/app/_components/SearchBar/options/SearchOption';
 import { BulletOption } from '@/app/_components/SearchBar/options/BulletOption';
 import { Condition } from '@/types/search';
+import { RequestLocations } from '@/types/requests';
 import { usePreviousSearches } from '@/app/_util/usePreviousSearches';
 import { SuggestionsDropdown } from '@/app/_components/SearchBar/SuggestionsDropdown';
 
@@ -172,6 +173,50 @@ export function SearchBar({ handleSearch }: SearchBarProps) {
                         >
                             Used
                         </BulletOption>
+                    </SearchOption>
+                </SearchOptionPill>
+                <SearchOptionPill
+                    text={searchOptions.location ?? 'Location'}
+                    optionUsed={searchOptions.location !== undefined}
+                    dropdownActive={openedOption === 'Location'}
+                    onToggle={() =>
+                        openedOption === 'Location'
+                            ? setOpenedOption('')
+                            : setOpenedOption('Location')
+                    }
+                    onClose={() => setOpenedOption('')}
+                >
+                    <SearchOption
+                        name="Location"
+                        onClose={() => setOpenedOption('')}
+                    >
+                        <BulletOption
+                            onClick={() =>
+                                setSearchOptions({
+                                    ...searchOptions,
+                                    location: undefined,
+                                })
+                            }
+                            selected={searchOptions.location === undefined}
+                        >
+                            All Estonia
+                        </BulletOption>
+                        {Object.values(RequestLocations)
+                            .filter((location) => location !== 'Eesti')
+                            .map((location) => (
+                                <BulletOption
+                                    key={location}
+                                    onClick={() =>
+                                        setSearchOptions({
+                                            ...searchOptions,
+                                            location,
+                                        })
+                                    }
+                                    selected={searchOptions.location === location}
+                                >
+                                    {location}
+                                </BulletOption>
+                            ))}
                     </SearchOption>
                 </SearchOptionPill>
             </div>
