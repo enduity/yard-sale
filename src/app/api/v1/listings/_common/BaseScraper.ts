@@ -21,13 +21,6 @@ export abstract class BaseScraper {
 
     public async *scrapeWithCache(): AsyncGenerator<Listing> {
         for await (const listingData of this.scrape()) {
-            if (
-                this.searchCriteria?.maxDaysListed &&
-                listingData.listedAt.getTime() <
-                    Date.now() - this.searchCriteria.maxDaysListed * 24 * 60 * 60 * 1000
-            ) {
-                continue;
-            }
             const listing = await DatabaseManager.addListing(
                 listingData,
                 this.query,

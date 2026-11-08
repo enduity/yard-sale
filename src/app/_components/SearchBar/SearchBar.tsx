@@ -174,49 +174,6 @@ export function SearchBar({ handleSearch }: SearchBarProps) {
                         </BulletOption>
                     </SearchOption>
                 </SearchOptionPill>
-                <SearchOptionPill
-                    text={
-                        searchOptions.maxDaysListed
-                            ? `${searchOptions.maxDaysListed === 1 ? '24 hours' : `${searchOptions.maxDaysListed} days`}`
-                            : 'Listed'
-                    }
-                    optionUsed={searchOptions.maxDaysListed !== undefined}
-                    dropdownActive={openedOption === 'Listed'}
-                    onToggle={() =>
-                        openedOption === 'Listed'
-                            ? setOpenedOption('')
-                            : setOpenedOption('Listed')
-                    }
-                    onClose={() => setOpenedOption('')}
-                >
-                    <SearchOption name="Listed" onClose={() => setOpenedOption('')}>
-                        <BulletOption
-                            onClick={() =>
-                                setSearchOptions({
-                                    ...searchOptions,
-                                    maxDaysListed: undefined,
-                                })
-                            }
-                            selected={searchOptions.maxDaysListed === undefined}
-                        >
-                            All
-                        </BulletOption>
-                        {[1, 7, 30].map((days) => (
-                            <BulletOption
-                                key={days}
-                                onClick={() =>
-                                    setSearchOptions({
-                                        ...searchOptions,
-                                        maxDaysListed: days as 1 | 7 | 30,
-                                    })
-                                }
-                                selected={searchOptions.maxDaysListed === days}
-                            >
-                                Past {days > 1 ? `${days} days` : '24 hours'}
-                            </BulletOption>
-                        ))}
-                    </SearchOption>
-                </SearchOptionPill>
             </div>
             <button
                 onClick={internalHandleSearch}

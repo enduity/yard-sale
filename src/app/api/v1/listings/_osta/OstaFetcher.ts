@@ -81,9 +81,8 @@ export class OstaFetcher extends BaseScraper {
 
                 if (title && listingUrl && !isNaN(price) && thumbnailValue) {
                     newItems++;
-                    // osta.ee no longer exposes listing dates or seller location
-                    // in the search results. `maxDaysListed` therefore cannot
-                    // filter these out; treat as listed today.
+                    // osta.ee exposes no listing dates in the search results;
+                    // treat as listed today.
                     yield {
                         title,
                         price,

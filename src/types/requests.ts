@@ -23,7 +23,6 @@ export type RequestOptions = {
     maxPrice?: number;
     sort?: RequestSort;
     condition?: Condition;
-    maxDaysListed?: 1 | 7 | 30;
 };
 
 /**
@@ -75,13 +74,6 @@ function getInvalidOptionNames(options: Partial<RequestOptions>): string[] {
         invalidParams.push('condition');
     }
 
-    if (
-        options.maxDaysListed !== undefined &&
-        ![1, 7, 30].includes(options.maxDaysListed)
-    ) {
-        invalidParams.push('maxDaysListed');
-    }
-
     return invalidParams;
 }
 
@@ -113,7 +105,7 @@ export function findFirstInvalidOption(options: Partial<RequestOptions>): string
  */
 export type GetListingsOptions = Pick<
     RequestOptions,
-    'query' | 'condition' | 'maxDaysListed'
+    'query' | 'condition'
 >;
 
 /**

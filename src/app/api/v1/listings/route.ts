@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     // Get all parameters as an object
     const rawParams = Object.fromEntries(url.searchParams.entries());
 
-    const numeric = ['minPrice', 'maxPrice', 'maxDaysListed'];
+    const numeric = ['minPrice', 'maxPrice'];
     const params = Object.fromEntries(
         Object.entries(rawParams)
             .filter(([, value]) => value !== '')
@@ -31,7 +31,6 @@ export async function GET(req: NextRequest) {
     }
 
     const searchCriteria: SearchCriteria = {
-        maxDaysListed: params.maxDaysListed,
         condition: params.condition,
     };
 
