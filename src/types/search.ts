@@ -6,9 +6,12 @@ export enum Condition {
     Used = 'used',
 }
 
+import type { RequestLocations } from '@/types/requests';
+
 /**
  * Represents the search criteria for a listing.
  */
 export type SearchCriteria = {
     condition?: Condition;
+    location?: RequestLocations;
 };
