@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server';
 import { ApiResponse } from '@/app/api/v1/_util/ApiResponse';
-import { MarketplaceScraper } from '@/app/api/v1/listings/_marketplace/MarketplaceScraper';
 import { findFirstInvalidOption, isValidRequestOptions } from '@/types/requests';
 import { DatabaseManager } from '@/app/api/v1/listings/_database/DatabaseManager';
 import { QueueManager } from '@/app/api/v1/listings/_database/QueueManager';
@@ -61,12 +60,6 @@ export async function GET(req: NextRequest) {
         );
     }
 
-    const marketplaceScraper = await MarketplaceScraper.init(
-        params.query,
-        searchCriteria,
-    );
-    const marketplace = marketplaceScraper.scrapeWithCache();
-
     const okidokiScraper = new OkidokiScraper(params.query, searchCriteria);
     const okidoki = okidokiScraper.scrapeWithCache();
 
@@ -74,7 +67,7 @@ export async function GET(req: NextRequest) {
     const osta = ostaFetcher.scrapeWithCache();
 
     const generator = (async function* () {
-        yield* race<Listing>(marketplace, okidoki, osta);
+        yield* race<Listing>(okidoki, osta);
     })();
 
     const streamGenerator = (async function* () {
