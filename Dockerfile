@@ -35,9 +35,10 @@ RUN pnpm prune --prod
 # Stage 2: Production
 FROM node:26-alpine
 
-# Install Chromium for Puppeteer
+# Install Chromium for Puppeteer and glibc compatibility for CycleTLS
 RUN apk add --no-cache \
     chromium \
+    gcompat \
     nss \
     freetype \
     harfbuzz \
