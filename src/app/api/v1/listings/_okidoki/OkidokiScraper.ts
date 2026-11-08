@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import { CycleTLSClient } from 'cycletls';
+import { CycleTLSClient } from '@/lib/CycleTLS/client';
 import { BaseScraper } from '@/app/api/v1/listings/_common/BaseScraper';
 import { fetchWithCycleTLS } from '@/lib/CycleTLS/fetchWithCycleTLS';
 import { ListingDataWithDate, ListingSource } from '@/types/listings';

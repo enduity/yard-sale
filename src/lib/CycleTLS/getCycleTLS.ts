@@ -1,4 +1,4 @@
-import initCycleTLS, { CycleTLSClient } from '@/lib/CycleTLS/CycleTLSEnhanced';
+import initCycleTLS, { CycleTLSClient } from '@/lib/CycleTLS/client';
 import { getCycleTLSPath } from '@/lib/CycleTLS/getCycleTLSPath';
 
 declare global {

@@ -20,7 +20,7 @@ import { QueueManager } from '@/app/api/v1/listings/_database/QueueManager';
 import { Condition, SearchCriteria } from '@/types/search';
 import { getCycleTLS } from '@/lib/CycleTLS/getCycleTLS';
 import ProxyManager from '@/lib/ProxyManager';
-import { CycleTLSRequestOptions, CycleTLSClient } from '@/lib/CycleTLS/CycleTLSEnhanced';
+import { CycleTLSRequestOptions, CycleTLSClient } from '@/lib/CycleTLS/client';
 
 class ProxyBlockedError extends Error {
     constructor(message: string) {

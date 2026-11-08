@@ -1,4 +1,4 @@
-import { CycleTLSClient, CycleTLSRequestOptions } from '@/lib/CycleTLS/CycleTLSEnhanced';
+import { CycleTLSClient, CycleTLSRequestOptions } from '@/lib/CycleTLS/client';
 import ProxyManager from '@/lib/ProxyManager';
 
 /**

@@ -2,7 +2,7 @@ import { ListingDataWithDate, ListingSource } from '@/types/listings';
 import { fetchWithCycleTLS } from '@/lib/CycleTLS/fetchWithCycleTLS';
 import { BaseScraper } from '@/app/api/v1/listings/_common/BaseScraper';
 import { Condition, SearchCriteria } from '@/types/search';
-import { CycleTLSClient } from 'cycletls';
+import { CycleTLSClient } from '@/lib/CycleTLS/client';
 
 type OstaJsonListing = {
     id: number;
