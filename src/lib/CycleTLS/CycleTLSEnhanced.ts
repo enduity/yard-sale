@@ -59,6 +59,9 @@ export interface CycleTLSRequestOptions {
 }
 
 export interface CycleTLSResponse {
+    text(): Promise<string>;
+    json(): Promise<unknown>;
+    arrayBuffer(): Promise<ArrayBuffer>;
     status: number;
     body:
         | string
@@ -499,6 +502,11 @@ const initCycleTLS = async (
                             resolveRequest({
                                 status,
                                 body: parsedBody,
+                                text: async () => response.Body,
+                                json: async () => JSON.parse(response.Body),
+                                arrayBuffer: async () =>
+                                    Uint8Array.from(Buffer.from(response.Body, 'base64'))
+                                        .buffer,
                                 headers,
                                 finalUrl,
                             });
